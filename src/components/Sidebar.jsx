@@ -19,8 +19,8 @@ const sidebarLinkItems = [
   },
   {
     icon: FaClipboard,
-    text: "Time Sheet",
-    path: "/timesheet",
+    text: "Work Sheet",
+    path: "/worksheet",
   },
 
   {
