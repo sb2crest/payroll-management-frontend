@@ -9,6 +9,10 @@ import Profile from "./pages/Profile.jsx";
 import Timesheet from "./pages/Timesheet.jsx";
 import AddConsignee from "./pages/AddConsignee.jsx";
 import AddHour from "./pages/AddHour.jsx";
+import axios from "axios";
+
+axios.defaults.baseURL = "http://localhost8080";
+axios.defaults.withCredentials = true;
 
 const router = createBrowserRouter([
   {
