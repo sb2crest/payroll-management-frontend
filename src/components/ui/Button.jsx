@@ -1,21 +1,30 @@
-import React from "react";
+import Theme from "../../theme/Theme";
 
 const Button = ({ onClick, children, className }) => {
   const style = {
     colors: {
-      backgroundColor: "#A784ED",
-      primary: "#FFFFFF",
-      secondary: "#a855f7",
+      primary: Theme.colors.primary,
+      secondary: Theme.colors.secondary,
+      accent: Theme.colors.accent,
+      globalBackgroundColor: Theme.colors.globalBackgroundColor,
+      componentBackgroundColor: Theme.colors.componentBackgroundColor,
+    },
+    font: {
+      fontFamily: Theme.font.font,
+    },
+    company: {
+      logo: Theme.company.logoURL,
+      name: Theme.company.name,
     },
   };
+
   return (
     <button
       className={`py-2 px-10 rounded-md ${className} `}
       onClick={onClick}
       style={{
-        background: style.colors.backgroundColor,
-        color: style.colors.primary,
-        hover: style.secondary,
+        background: style.colors.primary,
+        color: style.colors.componentBackgroundColor,
       }}
     >
       {children}

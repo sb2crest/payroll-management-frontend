@@ -5,6 +5,7 @@ import { CgProfile } from "react-icons/cg";
 import { MdBrightness4 } from "react-icons/md";
 import { IoIosSettings } from "react-icons/io";
 import { useState } from "react";
+import Theme from "../theme/Theme;
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -16,29 +17,49 @@ const style = {
   },
 };
 
+
 const Navbar = () => {
   const [hasNewMail, setHasNewMail] = useState(true);
   const [hasNewNotification, setHasNewNotification] = useState(true);
+
+
+  const style = {
+    colors: {
+      primary: Theme.colors.primary,
+      secondary: Theme.colors.secondary,
+      accent: Theme.colors.accent,
+      globalBackgroundColor: Theme.colors.globalBackgroundColor,
+      componentBackgroundColor: Theme.colors.componentBackgroundColor,
+    },
+    font: {
+      fontFamily: Theme.font.font,
+    },
+    company: {
+      logo: Theme.company.logoURL,
+      name: Theme.company.name,
+    },
+  };
+
 
   return (
     <div className="h-16 w-full border-b flex items-center justify-between px-8 bg-white">
       <div>
         <p
           className="text-[16px] font-bold"
-          style={{ color: style.colors.primary }}
+          style={{ color: style.colors.secondary }}
         >
           Hi, Kavya Shree
         </p>
         <p
           className="text-[10px] font-normal mt-[0px]"
-          style={{ color: style.colors.secondary }}
+          style={{ color: style.colors.accent }}
         >
           Have a productive work day!
         </p>
       </div>
       <div className="relative ml-20 max-w-[300px] w-full">
         <button className="absolute top-1/2 left-2 transform -translate-y-1/2  border-none cursor-pointer rounded-l-lg">
-          <CiSearch style={{ color: style.colors.secondary }} />
+          <CiSearch style={{ color: style.colors.accent }} />
         </button>
         <input
           type="text"
@@ -48,6 +69,9 @@ const Navbar = () => {
       </div>
       <div className="flex items-center gap-5">
         <div
+
+          className="flex items-center ml-20"
+          style={{ color: style.colors.secondary }}
           className="flex items-center"
           style={{ color: style.colors.primary }}
         >
@@ -118,19 +142,21 @@ export const PersonCard = () => {
           onClick={() => setOpen(!open)}
         >
           <CgProfile
+            className="text-[32px] cursor-pointer"
+            style={{ color: style.colors.secondary }}
             className="text-[32px] "
             style={{ color: style.colors.primary }}
           />
           <div className="ml-2">
             <p
               className="text-[16px] font-medium"
-              style={{ color: style.colors.primary }}
+              style={{ color: style.colors.secondary }}
             >
               Kavya Shree
             </p>
             <p
               className="text-[10px] mt-[0px]"
-              style={{ color: style.colors.secondary }}
+              style={{ color: style.colors.accent }}
             >
               Associate Developer
             </p>
