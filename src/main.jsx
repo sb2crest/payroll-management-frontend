@@ -9,6 +9,7 @@ import Profile from "./pages/Profile.jsx";
 import Timesheet from "./pages/Timesheet.jsx";
 import AddConsignee from "./pages/AddConsignee.jsx";
 import AddHour from "./pages/AddHour.jsx";
+import Worksheet from "./pages/Worksheet.jsx";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
       {
         path: "/timesheet",
         element: <Timesheet />,
+      },
+      {
+        path: "/worksheet",
+        element: <Worksheet />,
       },
       {
         path: "/add-consignee",

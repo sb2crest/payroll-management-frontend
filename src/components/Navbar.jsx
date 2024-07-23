@@ -5,7 +5,7 @@ import { CgProfile } from "react-icons/cg";
 import { MdBrightness4 } from "react-icons/md";
 import { IoIosSettings } from "react-icons/io";
 import { useState } from "react";
-import Theme from "../theme/Theme;
+import Theme from "../theme/Theme";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -17,11 +17,9 @@ const style = {
   },
 };
 
-
 const Navbar = () => {
   const [hasNewMail, setHasNewMail] = useState(true);
   const [hasNewNotification, setHasNewNotification] = useState(true);
-
 
   const style = {
     colors: {
@@ -39,7 +37,6 @@ const Navbar = () => {
       name: Theme.company.name,
     },
   };
-
 
   return (
     <div className="h-16 w-full border-b flex items-center justify-between px-8 bg-white">
@@ -69,11 +66,8 @@ const Navbar = () => {
       </div>
       <div className="flex items-center gap-5">
         <div
-
           className="flex items-center ml-20"
           style={{ color: style.colors.secondary }}
-          className="flex items-center"
-          style={{ color: style.colors.primary }}
         >
           <div className="relative mr-6">
             <CgMail className="text-2xl " />
@@ -143,14 +137,12 @@ export const PersonCard = () => {
         >
           <CgProfile
             className="text-[32px] cursor-pointer"
-            style={{ color: style.colors.secondary }}
-            className="text-[32px] "
             style={{ color: style.colors.primary }}
           />
           <div className="ml-2">
             <p
               className="text-[16px] font-medium"
-              style={{ color: style.colors.secondary }}
+              style={{ color: style.colors.primary }}
             >
               Kavya Shree
             </p>

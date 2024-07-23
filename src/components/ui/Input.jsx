@@ -27,16 +27,15 @@ const Input = ({ label, id, name, type, placeholder }) => {
       >
         {label}
       </label>
-      <div className="relative mt-2 rounded-md shadow-sm">
+      <div className="relative mt-2 rounded-md">
         <input
           id={id}
           name={name}
           type={type}
           placeholder={placeholder}
-          className="block w-full border py-1.5 px-3 focus:outline-none focus:border-white sm:text-sm sm:leading-6"
+          className="block border-white py-1.5 px-3 focus:outline-none focus:border-white sm:text-sm sm:leading-6"
           style={{
             backgroundColor: style.colors.componentBackgroundColor,
-            border: `1px solid ${style.colors.accent}`,
             placeholder: style.colors.accent,
           }}
         />
