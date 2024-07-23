@@ -10,6 +10,11 @@ import Timesheet from "./pages/Timesheet.jsx";
 import AddConsignee from "./pages/AddConsignee.jsx";
 import AddHour from "./pages/AddHour.jsx";
 import Worksheet from "./pages/Worksheet.jsx";
+import axios from "axios";
+import { ThemeProvider } from "./context/theme-context.jsx";
+
+axios.defaults.baseURL = "http://localhost8080";
+axios.defaults.withCredentials = true;
 
 const router = createBrowserRouter([
   {
@@ -53,5 +58,7 @@ const router = createBrowserRouter([
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <RouterProvider router={router} />
+  <ThemeProvider>
+    <RouterProvider router={router} />
+  </ThemeProvider>
 );
