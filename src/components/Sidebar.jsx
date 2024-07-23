@@ -114,7 +114,13 @@ function Sidebar() {
           </h1>
         </div>
         <div className="mt-10 px-8">
-          <p className={`${open ? "opacity-100" : "opacity-0"}`}>overview</p>
+          <p
+            className={`${
+              open ? "opacity-100" : "opacity-0"
+            } text-sm text-gray-500`}
+          >
+            overview
+          </p>
 
           <div className="w-full flex flex-col mt-4">
             {manager
@@ -159,7 +165,7 @@ const SidebarLink = ({ icon: Icon, path, text, open }) => {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <span className="text-lg">
+        <span className="text-xl">
           <Icon />
         </span>
         <motion.span
@@ -168,7 +174,7 @@ const SidebarLink = ({ icon: Icon, path, text, open }) => {
             opacity: open ? 1 : 0,
           }}
           transition={{ duration: 0.3 }}
-          className={`overflow-hidden whitespace-nowrap ${
+          className={`overflow-hidden whitespace-nowrap text-md font-semibold ${
             open ? "opacity-100 " : "opacity-0"
           } `}
         >
