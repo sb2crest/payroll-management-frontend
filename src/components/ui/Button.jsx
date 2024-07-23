@@ -1,6 +1,6 @@
 import React from "react";
 
-const Button = ({ onClick, children }) => {
+const Button = ({ onClick, children, className }) => {
   const style = {
     colors: {
       backgroundColor: "#A784ED",
@@ -10,7 +10,7 @@ const Button = ({ onClick, children }) => {
   };
   return (
     <button
-      className="py-2 px-10 rounded-md"
+      className={`py-2 px-10 rounded-md ${className} `}
       onClick={onClick}
       style={{
         background: style.colors.backgroundColor,
