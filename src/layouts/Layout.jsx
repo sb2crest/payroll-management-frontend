@@ -4,7 +4,7 @@ import Sidebar from "../components/Sidebar";
 
 function Layout() {
   return (
-    <div className="flex w-full bg-indigo-50/50">
+    <div className="flex w-full">
       <div>
         <Sidebar />
       </div>
