@@ -4,10 +4,14 @@ import Sidebar from "../components/Sidebar";
 
 function Layout() {
   return (
-    <div>
-      <Navbar />
-      <Sidebar />
-      <Outlet />
+    <div className="flex w-full bg-indigo-50/50">
+      <div>
+        <Sidebar />
+      </div>
+      <div>
+        <Navbar />
+        <Outlet />
+      </div>
     </div>
   );
 }

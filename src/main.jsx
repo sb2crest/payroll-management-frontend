@@ -3,6 +3,12 @@ import "./index.css";
 import Layout from "./layouts/Layout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Inbox from "./pages/Inbox.jsx";
+import Settings from "./pages/Settings.jsx";
+import Profile from "./pages/Profile.jsx";
+import Timesheet from "./pages/Timesheet.jsx";
+import AddConsignee from "./pages/AddConsignee.jsx";
+import AddHour from "./pages/AddHour.jsx";
 
 const router = createBrowserRouter([
   {
@@ -12,6 +18,30 @@ const router = createBrowserRouter([
       {
         path: "/dashboard",
         element: <Dashboard />,
+      },
+      {
+        path: "/settings",
+        element: <Settings />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
+      },
+      {
+        path: "/inbox",
+        element: <Inbox />,
+      },
+      {
+        path: "/timesheet",
+        element: <Timesheet />,
+      },
+      {
+        path: "/add-consignee",
+        element: <AddConsignee />,
+      },
+      {
+        path: "/add-hour",
+        element: <AddHour />,
       },
     ],
   },
