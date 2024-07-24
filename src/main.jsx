@@ -14,6 +14,10 @@ import Worksheet from "./pages/Worksheet.jsx";
 import { ThemeProvider } from "./context/theme-context.jsx";
 import Login from "./pages/Login.jsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import axios from "axios";
+
+axios.defaults.baseURL="http://localhost:8080/api";
+axios.defaults.withCredentials=true
 
 const router = createBrowserRouter([
   {
