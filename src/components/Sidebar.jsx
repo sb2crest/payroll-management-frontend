@@ -85,62 +85,71 @@ function Sidebar() {
     <motion.div
       initial={{ width: "230px" }}
       animate={{ width: open ? "230px" : "85px" }}
-      className="h-screen bg-white shadow-md relative"
+      className="h-screen bg-white  relative"
     >
-      <motion.button
-        initial={{ rotate: "0deg" }}
-        animate={{ rotate: open ? "0deg" : "-180deg" }}
-        transition={{ duration: 0.3 }}
-        onClick={toggleSidebar}
-        className="w-10 h-10 z-50 rounded-full absolute -right-5 top-4  bg-red-300 flex items-center text-white justify-center"
-        style={{ background: theme.colors.primary }}
+      <motion.div
+        initial={{ width: "230px" }}
+        animate={{ width: open ? "230px" : "85px" }}
+        className="h-screen  fixed bg-white top-0 shadow-md left-0"
       >
-        <span>
-          <IoIosArrowForward />
-        </span>
-      </motion.button>
-      <div className="h-screen fixed top-0 left-0">
-        <div className="w-full p-5 px-8  ">
-          <h1
-            className={`text-2xl text-black font-bold ${
-              open ? "opacity-100" : "opacity-0"
-            }`}
+        <div className="w-full relative">
+          <motion.button
+            initial={{ rotate: "180deg" }}
+            animate={{
+              rotate: open ? "180deg" : "0deg",
+              // left: open ? "210px" : "65px",
+            }}
+            transition={{ duration: 0.3 }}
+            onClick={toggleSidebar}
+            className="w-10 h-10 z-50 rounded-full absolute  top-4 -right-5  bg-red-300 flex items-center text-white justify-center"
+            style={{ background: theme.colors.primary }}
           >
-            Phoenix
-          </h1>
-        </div>
-        <div className="mt-10 px-8">
-          <p
-            className={`${
-              open ? "opacity-100" : "opacity-0"
-            } text-sm text-gray-500`}
-          >
-            overview
-          </p>
+            <span>
+              <IoIosArrowForward />
+            </span>
+          </motion.button>
+          <div className="w-full p-5 px-8  ">
+            <h1
+              className={`text-2xl text-black font-bold ${
+                open ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              Phoenix
+            </h1>
+          </div>
+          <div className="mt-10 px-8">
+            <p
+              className={`${
+                open ? "opacity-100" : "opacity-0"
+              } text-sm text-gray-500`}
+            >
+              overview
+            </p>
 
-          <div className="w-full flex flex-col mt-4">
-            {manager
-              ? sidebarLinkItemsForManger.map((val) => (
-                  <SidebarLink
-                    icon={val.icon}
-                    path={val.path}
-                    text={val.text}
-                    key={val.text}
-                    open={open}
-                  />
-                ))
-              : sidebarLinkItems.map((val) => (
-                  <SidebarLink
-                    icon={val.icon}
-                    path={val.path}
-                    text={val.text}
-                    key={val.text}
-                    open={open}
-                  />
-                ))}
+            <div className="w-full flex flex-col mt-4">
+              {manager
+                ? sidebarLinkItemsForManger.map((val) => (
+                    <SidebarLink
+                      icon={val.icon}
+                      path={val.path}
+                      text={val.text}
+                      key={val.text}
+                      open={open}
+                    />
+                  ))
+                : sidebarLinkItems.map((val) => (
+                    <SidebarLink
+                      icon={val.icon}
+                      path={val.path}
+                      text={val.text}
+                      key={val.text}
+                      open={open}
+                    />
+                  ))}
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

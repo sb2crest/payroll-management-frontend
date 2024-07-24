@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import Layout from "./layouts/Layout.jsx";
@@ -10,6 +11,9 @@ import Timesheet from "./pages/Timesheet.jsx";
 import AddConsignee from "./pages/AddConsignee.jsx";
 import AddHour from "./pages/AddHour.jsx";
 import Worksheet from "./pages/Worksheet.jsx";
+import { ThemeProvider } from "./context/theme-context.jsx";
+import Login from "./pages/Login.jsx";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const router = createBrowserRouter([
   {
@@ -50,10 +54,18 @@ const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: "/login",
+    element: <Login />,
+  },
 ]);
+
+const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ThemeProvider>
-    <RouterProvider router={router} />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </ThemeProvider>
 );

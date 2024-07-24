@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 const initialThemeData = {
   colors: {
-    primary: "#AB85F0",
+    primary: "#AB85C0",
     secondary: "#4D5664",
     accent: "#C8C9CC",
     globalBackgroundColor: "#F5F5F5",
