@@ -5,7 +5,6 @@ import { CgProfile } from "react-icons/cg";
 import { MdBrightness4 } from "react-icons/md";
 import { IoIosSettings } from "react-icons/io";
 import { useState } from "react";
-
 import Theme from "../theme/Theme";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -17,9 +16,7 @@ const style = {
     secondary: "#C8C9CC",
   },
 };
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { useTheme } from "../context/theme-context";
+
 const Navbar = () => {
   const { theme } = useTheme();
   const [hasNewMail, setHasNewMail] = useState(true);
@@ -72,7 +69,6 @@ const Navbar = () => {
         <div
           className="flex items-center ml-20"
           style={{ color: style.colors.secondary }}
-          style={{ color: theme.colors.secondary }}
         >
           <div className="relative mr-6">
             <CgMail className="text-2xl" />
@@ -153,13 +149,11 @@ const PersonCard = () => {
           <CgProfile
             className="text-[32px] cursor-pointer"
             style={{ color: style.colors.primary }}
-            style={{ color: theme.colors.secondary }}
           />
           <div className="ml-2">
             <p
               className="text-[16px] font-medium"
               style={{ color: style.colors.primary }}
-              style={{ color: theme.colors.secondary }}
             >
               Kavya Shree
             </p>
