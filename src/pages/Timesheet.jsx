@@ -7,11 +7,12 @@ import { useTheme } from "../context/theme-context";
 const fetchTimeSheetData = async () => {
   try {
     const res = await axios.get(
-      "http://localhost:8080/api/payrollManager/findAllEmployeesByMangerUniqueID?managerUniqueId=MGR2"
+      "/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG6D64C47B45"
     );
-    return res.data;
+    console.log(res.data);
+    return res.data; // Ensure the data is returned here
   } catch (error) {
-    console.log(error);
+    console.error("Failed to fetch data", error);
     throw new Error("Failed to fetch data");
   }
 };
@@ -21,6 +22,7 @@ const Timesheet = () => {
     queryKey: ["timeSheetData"],
     queryFn: fetchTimeSheetData,
   });
+
   const [filteredData, setFilteredData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
@@ -28,20 +30,20 @@ const Timesheet = () => {
 
   const { theme } = useTheme();
 
-  const handleApprove = (employeeId) => {
+  const handleApprove = (employeeUniqueId) => {
     setFilteredData((prevData) =>
       prevData.map((item) =>
-        item.employeeId === employeeId
+        item.employeeUniqueId === employeeUniqueId
           ? { ...item, approval: "approved" }
           : item
       )
     );
   };
 
-  const handleReject = (employeeId) => {
+  const handleReject = (employeeUniqueId) => {
     setFilteredData((prevData) =>
       prevData.map((item) =>
-        item.employeeId === employeeId
+        item.employeeUniqueId === employeeUniqueId
           ? { ...item, approval: "rejected" }
           : item
       )
@@ -49,25 +51,34 @@ const Timesheet = () => {
   };
 
   useEffect(() => {
-    if (data) {
+    if (data && Array.isArray(data)) {
       setFilteredData(
-        data.filter(
-          (item) =>
-            item.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.lastName.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+        data.filter((item) => {
+          const employeeId = item.employeeUniqueId?.toLowerCase() || "";
+          const firstName = item.firstName?.toLowerCase() || "";
+          const lastName = item.lastName?.toLowerCase() || "";
+          return (
+            employeeId.includes(searchTerm.toLowerCase()) ||
+            firstName.includes(searchTerm.toLowerCase()) ||
+            lastName.includes(searchTerm.toLowerCase())
+          );
+        })
       );
+    } else {
+      console.error("Unexpected data format:", data);
+      setFilteredData([]);
     }
   }, [searchTerm, data]);
-
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-  };
 
   const handlePageSizeChange = (e) => {
     setPageSize(Number(e.target.value));
     setCurrentPage(0); // Reset to first page when changing page size
+  };
+
+  const handlePageChange = (page) => {
+    if (page >= 0 && page < Math.ceil(filteredData.length / pageSize)) {
+      setCurrentPage(page);
+    }
   };
 
   const pages = Math.ceil(filteredData.length / pageSize);
@@ -81,11 +92,11 @@ const Timesheet = () => {
       <div className="bg-white p-10 mt-6 rounded-lg shadow-md relative">
         {isLoading ? (
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
-            Loading
+            Loading...
           </div>
         ) : error ? (
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
-            Loading
+            Error loading data
           </div>
         ) : (
           <>
@@ -168,9 +179,12 @@ const Timesheet = () => {
               </thead>
               <tbody>
                 {currentPageData.map((item) => (
-                  <tr key={item.employeeId} className="border-2 border-white">
+                  <tr
+                    key={item.employeeUniqueId}
+                    className="border-2 border-white"
+                  >
                     <td className="border-2 border-white p-2 text-sm">
-                      {item.employeeId}
+                      {item.employeeUniqueId}
                     </td>
                     <td className="border-2 border-white p-2 text-sm">
                       {item.firstName}
@@ -185,13 +199,13 @@ const Timesheet = () => {
                       {item.paymentMode}
                     </td>
                     <td className="border-2 border-white p-2 text-sm">
-                      {item.defaultHours}
+                      {item.assignedHours}
                     </td>
                     <td className="border-2 border-white p-2 text-sm">
-                      {item.overTimeHours}
+                      {item.overTimeWorkingHours}
                     </td>
                     <td className="border-2 border-white p-2 text-sm">
-                      {item.totalHours}
+                      {item.totalWorkingHours}
                     </td>
                     <td className="border-2 border-white p-2 text-sm">
                       {item.approval === "approved" ? (
@@ -202,13 +216,13 @@ const Timesheet = () => {
                         <div className="flex">
                           <button
                             className="mr-2 p-1 bg-green-500 text-white text-sm rounded-md"
-                            onClick={() => handleApprove(item.employeeId)}
+                            onClick={() => handleApprove(item.employeeUniqueId)}
                           >
                             Approve
                           </button>
                           <button
                             className="p-1 bg-red-500 text-white text-sm rounded-md"
-                            onClick={() => handleReject(item.employeeId)}
+                            onClick={() => handleReject(item.employeeUniqueId)}
                           >
                             Reject
                           </button>
