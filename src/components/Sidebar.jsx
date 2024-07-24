@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { IoIosArrowForward } from "react-icons/io";
 import { MdOutlineAccessTimeFilled } from "react-icons/md";
 import { IoPeopleSharp } from "react-icons/io5";
+import { useTheme } from "../context/theme-context";
 
 const sidebarLinkItems = [
   {
@@ -74,17 +75,12 @@ const sidebarLinkItemsForManger = [
   },
 ];
 
-const styles = {
-  primaryColor: "#7b2cbf",
-  secondaryColor: "#212529",
-};
-
 const manager = true;
 
 function Sidebar() {
   const [open, setOpen] = useState(true);
   const toggleSidebar = () => setOpen(!open);
-
+  const { theme } = useTheme();
   return (
     <motion.div
       initial={{ width: "230px" }}
@@ -97,7 +93,7 @@ function Sidebar() {
         transition={{ duration: 0.3 }}
         onClick={toggleSidebar}
         className="w-10 h-10 z-50 rounded-full absolute -right-5 top-4  bg-red-300 flex items-center text-white justify-center"
-        style={{ background: styles.primaryColor }}
+        style={{ background: theme.colors.primary }}
       >
         <span>
           <IoIosArrowForward />
@@ -154,12 +150,14 @@ export default Sidebar;
 const SidebarLink = ({ icon: Icon, path, text, open }) => {
   const { pathname } = useLocation();
   const active = pathname.includes(path);
-
+  const { theme } = useTheme();
   return (
     <Link to={path} className="w-full">
       <motion.div
         className="w-full flex gap-3 items-center py-3"
-        style={{ color: active ? styles.primaryColor : styles.secondaryColor }}
+        style={{
+          color: active ? theme.colors.primary : theme.colors.secondary,
+        }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
