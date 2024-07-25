@@ -8,7 +8,7 @@ function Layout() {
   return (
     <div
       className="flex w-full "
-      style={{ background: theme.colors.globalBackgroundColor }}
+      // style={{ background: theme.colors.globalBackgroundColor }}
     >
       <div>
         <Sidebar />

@@ -1,7 +1,5 @@
 import axios from "axios";
 
-
-
 export const fetchTheme = async (companyId) => {
   try {
     const res = await axios.get(`/api/theme/${companyId}`);
@@ -33,11 +31,8 @@ export const addConsigneeData = async (
   };
   console.log("Request Body:", requestBody);
   try {
-    const response = await axios.post("/data-details/addData",
-      requestBody
-    );
+    const response = await axios.post("/data-details/addData", requestBody);
     console.log(response.data);
-  //  return response.data
   } catch (error) {
     console.error("Error in saving data: " + error);
   }

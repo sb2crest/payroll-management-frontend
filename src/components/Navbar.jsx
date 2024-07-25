@@ -19,7 +19,7 @@ const style = {
 };
 
 const Navbar = () => {
-  const { theme } = useTheme();
+  const { colors } = useTheme();
   const [hasNewMail, setHasNewMail] = useState(true);
   const [hasNewNotification, setHasNewNotification] = useState(true);
 
@@ -45,20 +45,20 @@ const Navbar = () => {
       <div>
         <p
           className="text-[16px] font-bold"
-          style={{ color: theme.colors.secondary }}
+          style={{ color: colors.secondary }}
         >
           Hi, Kavya Shree
         </p>
         <p
           className="text-[10px] font-normal mt-[0px]"
-          style={{ color: theme.colors.accent }}
+          style={{ color: colors.accent }}
         >
           Have a productive work day!
         </p>
       </div>
       <div className="relative ml-20 max-w-[300px] w-full">
         <button className="absolute top-1/2 left-2 transform -translate-y-1/2 border-none cursor-pointer rounded-l-lg">
-          <CiSearch style={{ color: theme.colors.accent }} />
+          <CiSearch style={{ color: colors.accent }} />
         </button>
         <input
           type="text"
@@ -99,7 +99,7 @@ const PersonCard = () => {
   const handleLogOut = () => {
     setOpen(false);
   };
-  const { theme } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <div className="relative">
@@ -128,20 +128,20 @@ const PersonCard = () => {
           <Link
             to="/profile"
             onClick={() => setOpen(false)}
-            style={{ color: theme.colors.secondary }}
+            style={{ color: colors.secondary }}
           >
             Profile
           </Link>
           <Link
             to="/settings"
             onClick={() => setOpen(false)}
-            style={{ color: theme.colors.secondary }}
+            style={{ color: colors.secondary }}
           >
             Settings
           </Link>
           <button
             onClick={handleLogOut}
-            style={{ background: theme.colors.primary }}
+            style={{ background:colors.primary }}
             className="w-full py-2 px-10 rounded-md text-white"
           >
             Logout
@@ -153,18 +153,18 @@ const PersonCard = () => {
         >
           <CgProfile
             className="text-[32px] cursor-pointer"
-            style={{ color: style.colors.primary }}
+            style={{ color: colors.primary }}
           />
           <div className="ml-2">
             <p
               className="text-[16px] font-medium"
-              style={{ color: style.colors.primary }}
+              style={{ color: colors.primary }}
             >
               Kavya Shree
             </p>
             <p
               className="text-[10px] mt-[0px]"
-              style={{ color: theme.colors.accent }}
+              style={{ color: colors.accent }}
             >
               Associate Developer
             </p>
