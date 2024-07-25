@@ -1,21 +1,16 @@
 import { useTheme } from "../context/theme-context";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const { companyID } = useParams();
-
-
   const { colors, fetchCompanyThemeData } = useTheme();
 
   useLayoutEffect(() => {
     fetchCompanyThemeData(companyID);
- 
   }, [companyID]);
-
-
 
   return (
     <section>
@@ -61,7 +56,7 @@ function Login() {
                 </a>
               </div>
               <button
-              style={{background:colors.primary}}
+                style={{ background: colors.primary }}
                 type="submit"
                 className="text-white font-medium  py-1.5 px-4 rounded-sm  w-full"
               >
