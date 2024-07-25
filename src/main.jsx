@@ -11,13 +11,6 @@ import Timesheet from "./pages/Timesheet.jsx";
 import AddConsignee from "./pages/AddConsignee.jsx";
 import AddHour from "./pages/AddHour.jsx";
 import Worksheet from "./pages/Worksheet.jsx";
-import { ThemeProvider } from "./context/theme-context.jsx";
-import Login from "./pages/Login.jsx";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import axios from "axios";
-
-axios.defaults.baseURL="http://localhost:8080/api";
-axios.defaults.withCredentials=true
 
 const router = createBrowserRouter([
   {
@@ -67,9 +60,9 @@ const router = createBrowserRouter([
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <ThemeProvider>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  </ThemeProvider>
+  // eslint-disable-next-line react/jsx-no-undef
+  <QueryClientProvider client={queryClient}>
+  <Toaster position="top-right" reverseOrder={false} />
+  <RouterProvider router={router} />
+</QueryClientProvider>
 );
