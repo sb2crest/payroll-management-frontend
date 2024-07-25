@@ -9,8 +9,8 @@ const fetchTimeSheetData = async () => {
     const res = await axios.get(
       "/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG6D64C47B45"
     );
-    console.log(res.data);
-    return res.data; // Ensure the data is returned here
+    console.log("Fetched Data:", res.data);
+    return res.data;
   } catch (error) {
     console.error("Failed to fetch data", error);
     throw new Error("Failed to fetch data");
@@ -52,6 +52,7 @@ const Timesheet = () => {
 
   useEffect(() => {
     if (data && Array.isArray(data)) {
+      console.log("Data in useEffect:", data); // Debugging statement
       setFilteredData(
         data.filter((item) => {
           const employeeId = item.employeeUniqueId?.toLowerCase() || "";

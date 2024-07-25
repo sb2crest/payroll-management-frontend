@@ -117,8 +117,12 @@ const PersonCard = () => {
       <div>
         <motion.div
           className="absolute top-10 right-0 w-[250px] shadow-md bg-white z-50 rounded-lg p-4 flex flex-col gap-2"
-          initial={{ opacity: 0, y: "20px" }}
-          animate={{ opacity: open ? 1 : 0, y: open ? "0" : "20px" }}
+          initial={{ opacity: 0, y: "20px", display: "none" }}
+          animate={{
+            opacity: open ? 1 : 0,
+            y: open ? "0" : "20px",
+            display: open ? "flex" : "none",
+          }}
           transition={{ duration: 0.3 }}
         >
           <Link
