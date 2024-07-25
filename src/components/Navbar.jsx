@@ -8,6 +8,7 @@ import { useState } from "react";
 import Theme from "../theme/Theme";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useTheme } from "../context/theme-context";
 
 const style = {
   colors: {

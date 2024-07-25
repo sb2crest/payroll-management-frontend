@@ -20,7 +20,7 @@ const Button = ({ onClick, children, className }) => {
 
   return (
     <button
-      className={`py-2 px-10 rounded-md ${className} `}
+      className={`py-1 px-5 rounded-md ${className} `}
       onClick={onClick}
       style={{
         background: style.colors.primary,
