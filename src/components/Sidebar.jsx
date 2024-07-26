@@ -9,75 +9,76 @@ import { motion } from "framer-motion";
 import { IoIosArrowForward } from "react-icons/io";
 import { IoPeopleSharp } from "react-icons/io5";
 import { useTheme } from "../context/theme-context";
-
-const sidebarLinkItems = [
-  {
-    icon: RiDashboardFill,
-    text: "Dashboard",
-    path: "/dashboard",
-  },
-  {
-    icon: FaClipboard,
-    text: "Work Sheet",
-    path: "/worksheet",
-  },
-
-  {
-    icon: IoPerson,
-    text: "Profile",
-    path: "/profile",
-  },
-
-  {
-    icon: IoIosSettings,
-    text: "Settings",
-    path: "/settings",
-  },
-];
-
-const sidebarLinkItemsForManger = [
-  {
-    icon: RiDashboardFill,
-    text: "Dashboard",
-    path: "/dashboard",
-  },
-  {
-    icon: IoPeopleSharp,
-    text: "Add Consignee",
-    path: "/add-consignee",
-  },
-  {
-    icon: FaClipboard,
-    text: "Time Sheet",
-    path: "/timesheet",
-  },
-  {
-    icon: IoIosNotifications,
-    text: "Add Hours",
-    path: "/add-hours",
-  },
-  // {
-  //   icon: MdOutlineAccessTimeFilled,
-  //   text: "Update Hour",
-  //   path: "/update-hours",
-  // },
-  {
-    icon: IoPerson,
-    text: "Profile",
-    path: "/profile",
-  },
-
-  {
-    icon: IoIosSettings,
-    text: "Settings",
-    path: "/settings",
-  },
-];
+import { useAuth } from "../context/auth-context";
 
 function Sidebar() {
   const [open, setOpen] = useState(true);
   const toggleSidebar = () => setOpen(!open);
-  const { colors, isManager } = useTheme();
+  const { colors } = useTheme();
+  const { role } = useAuth();
+
+  const sidebarLinkItems = [
+    {
+      icon: RiDashboardFill,
+      text: "Dashboard",
+      path: "/dashboard",
+    },
+    {
+      icon: FaClipboard,
+      text: "Work Sheet",
+      path: "/worksheet",
+    },
+
+    {
+      icon: IoPerson,
+      text: "Profile",
+      path: "/profile",
+    },
+
+
+
+  const sidebarLinkItemsForManger = [
+    {
+      icon: RiDashboardFill,
+      text: "Dashboard",
+      path: "/dashboard",
+    },
+    {
+      icon: IoPeopleSharp,
+      text: "Add Consignee",
+      path: "/add-consignee",
+    },
+    {
+      icon: FaClipboard,
+      text: "Time Sheet",
+      path: "/timesheet",
+    },
+    {
+      icon: IoIosNotifications,
+      text: "Add Hours",
+      path: "/add-hours",
+    },
+    {
+      icon: MdOutlineAccessTimeFilled,
+      text: "Update Hour",
+      path: "/update-hours",
+    },
+    {
+      icon: IoPerson,
+      text: "Profile",
+      path: "/profile",
+    },
+
+    {
+      icon: IoIosSettings,
+      text: "Settings",
+      path: "/settings",
+    },
+  ];
+
+  const sidebarItems =
+    role === "Manager" ? sidebarLinkItemsForManger : sidebarLinkItems;
+
   return (
     <motion.div
       initial={{ width: "230px" }}
@@ -122,25 +123,15 @@ function Sidebar() {
             </p>
 
             <div className="w-full flex flex-col mt-4">
-              {isManager
-                ? sidebarLinkItemsForManger.map((val) => (
-                    <SidebarLink
-                      icon={val.icon}
-                      path={val.path}
-                      text={val.text}
-                      key={val.text}
-                      open={open}
-                    />
-                  ))
-                : sidebarLinkItems.map((val) => (
-                    <SidebarLink
-                      icon={val.icon}
-                      path={val.path}
-                      text={val.text}
-                      key={val.text}
-                      open={open}
-                    />
-                  ))}
+              {sidebarItems.map((val) => (
+                <SidebarLink
+                  icon={val.icon}
+                  path={val.path}
+                  text={val.text}
+                  key={val.text}
+                  open={open}
+                />
+              ))}
             </div>
           </div>
         </div>

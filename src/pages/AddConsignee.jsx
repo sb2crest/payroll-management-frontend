@@ -2,6 +2,7 @@ import { useState } from "react";
 import { addConsigneeData } from "../helpers/theme-api";
 import toast from "react-hot-toast";
 import { useTheme } from "../context/theme-context";
+import { useAuth } from "../context/auth-context";
 
 function AddConsignee() {
   const [firstName, setFirstName] = useState("");
@@ -13,10 +14,14 @@ function AddConsignee() {
   const [workingHours, setWorkingHours] = useState(0);
   const [paymentDate, setPaymentDate] = useState("");
 
-  const addConsignee = (e) => {
+  const { ID } = useAuth();
+
+  const addConsignee = async (e) => {
     e.preventDefault();
+    console.log("ID : " + ID);
     try {
-      const res = addConsigneeData(
+      const res = await addConsigneeData(
+        ID,
         firstName,
         lastName,
         designation,

@@ -1,72 +1,84 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { CiSearch } from "react-icons/ci";
 import { useTheme } from "../context/theme-context";
+import { useAuth } from "../context/auth-context";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
+// Function to fetch time sheet data
+const fetchTimeSheetData = async (ID) => {
+  const res = await axios.get(
+    `http://localhost:8080/api/payrollEmployee/listOfTimeSheets?employeeUniqueId=${ID}`
+  );
+  return res.data.timeSheet;
+};
+
+// Function to update worked hours
+const updateWorkHours = async (data) => {
+  await axios.put(
+    `http://localhost:8080/api/payrollManager/updateWeeklyWorkedHours`,
+    data
+  );
+};
+
 const Worksheet = () => {
-  const [submitHours, setSubmitHours] = useState(false);
   const { colors } = useTheme();
+  const { ID } = useAuth();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Query to fetch time sheet data
+  const { data: timeSheet = [], status: queryStatus } = useQuery({
+    queryKey: ["timeSheet", ID],
+    queryFn: () => fetchTimeSheetData(ID),
+  });
+
+  // Mutation to update worked hours
+  const mutation = useMutation({
+    mutationFn: updateWorkHours,
+    onSuccess: () => {
+      // Invalidate the query to refetch data
+      queryClient.invalidateQueries(["timeSheet", ID]);
+      setSubmitHours(false);
+    },
+    onError: () => {
+      // Handle error (optional)
+    },
+  });
+
+  const [submitHours, setSubmitHours] = useState(false);
   const [modifyHours, setModifyHours] = useState(false);
   const [overTime, setOverTime] = useState(0);
   const [totalHours, setTotalHours] = useState(40);
-  const [status, setStatus] = useState("");
-  const [worksheetId, setWorksheetId] = useState("");
+  const [worksheetStatus, setWorksheetStatus] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [defaultHours, setDefaultHours] = useState(0);
-
-  const [data, setData] = useState([
-    {
-      status: "DRAFT",
-      employeeId: "EMP001",
-      startDate: "2024-05-01",
-      endDate: "2024-05-05",
-      defaultHours: 160,
-      overtimeHours: 0,
-      totalHours: 0,
-    },
-  ]);
-
-  // Define colors for different statuses
-  const statusColors = {
-    DRAFT: "orange",
-    PENDING: "gold",
-    APPROVED: "green",
-    REJECTED: "red",
-  };
+  const [defaultWorkingHours, setDefaultWorkingHours] = useState(0.0);
+  const [timeSheetID, setTimeSheetID] = useState(0);
 
   // Function to handle over time input change
   const handleOverTimeChange = (event) => {
-    const newOverTime = parseFloat(event.target.value) || 0; // Parse the input as a number
-    setOverTime(newOverTime);
-    setTotalHours(45 + newOverTime); // Update total hours
+    const newOverTime = parseFloat(event.target.value) || 0;
+    setOverTime(newOverTime);   
+    setTotalHours(defaultWorkingHours + newOverTime);
   };
 
-  const fetchWorkSheetData = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:8080/api/payrollEmployee/searchEmployee?firstName=Jane&lastName=Roy"
-      );
-      console.log(res.data);
-      console.log(
-        "setWorksheetId:",
-        res.data.employeeDataList[0].timeSheet[0].fromDate
-      );
-      setStatus(res.data.employeeDataList[0].timeSheet[0].status);
-      setWorksheetId(res.data.employeeDataList[0].timeSheet[0].timeSheetId);
-      setStartDate(res.data.employeeDataList[0].timeSheet[0].fromDate);
-      setEndDate(res.data.employeeDataList[0].timeSheet[0].toDate);
-      setDefaultHours(
-        res.data.employeeDataList[0].timeSheet[0].assignedDefaultHours
-      );
-    } catch (e) {
-      console.error("Error fetching work sheet data: " + e);
-    }
+  // Handler for submitting hours
+  const handleSubmitHours = () => {
+    mutation.mutate({
+      weeklySubmissionId: timeSheetID,
+      startDate,
+      endDate,
+      assignedDefaultHours: defaultWorkingHours,
+      totalWeeklyWorkedHours: totalHours,
+      totalOvertimeWorkedHours: overTime,
+    });
   };
 
-  useEffect(() => {
-    fetchWorkSheetData();
-  }, []);
+  const handleRowClick = (sheet) => {
+    navigate(`/table?timesheetId=${sheet.timeSheetId}&startDate=${sheet.fromDate}&endDate=${sheet.toDate}`);
+  };
 
   return (
     <>
@@ -78,7 +90,6 @@ const Worksheet = () => {
                 <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
                   <h3 className="text-3xl font-semibold">Edit Hours</h3>
                 </div>
-                {/*body*/}
                 <div className="p-4">
                   <div className="flex">
                     <div className="p-4">
@@ -87,7 +98,7 @@ const Worksheet = () => {
                       </span>
                       <br />
                       <span className="text-md text-[#4D5664] font-normal">
-                        DRAFT
+                        {worksheetStatus}
                       </span>
                     </div>
                     <div className="p-4">
@@ -96,7 +107,7 @@ const Worksheet = () => {
                       </span>
                       <br />
                       <span className="text-md text-[#4D5664] font-normal">
-                        PAYBR2345679
+                        {timeSheetID}
                       </span>
                     </div>
                     <div className="p-4">
@@ -105,7 +116,7 @@ const Worksheet = () => {
                       </span>
                       <br />
                       <span className="text-md text-[#4D5664] font-normal">
-                        2024-05-01
+                        {startDate}
                       </span>
                     </div>
                     <div className="p-4">
@@ -114,7 +125,7 @@ const Worksheet = () => {
                       </span>
                       <br />
                       <span className="text-md text-[#4D5664] font-normal">
-                        2024-05-05
+                        {endDate}
                       </span>
                     </div>
                     <div className="p-4">
@@ -123,7 +134,7 @@ const Worksheet = () => {
                       </span>
                       <br />
                       <span className="text-md text-[#4D5664] font-normal">
-                        45 Hours
+                        {defaultWorkingHours}
                       </span>
                     </div>
                   </div>
@@ -137,34 +148,37 @@ const Worksheet = () => {
                       Modify Hours +
                     </button>
                     {modifyHours && (
-                      <>
-                        <div className="grid grid-cols-2 gap-6 pl-6 pr-6 pb-2">
-                          <div className="flex flex-col">
-                            <label className="text-sm mb-1 text-[#9d9d9dee] font-medium ">
-                              Over Time
-                            </label>
-                            <input
-                              className="px-3 py-2 border border-gray-300 rounded focus:outline-none"
-                              value={overTime}
-                              onChange={handleOverTimeChange}
-                            />
-                          </div>
-                          <div className="flex flex-col">
-                            <label className="text-sm mb-1 text-[#9d9d9dee] font-medium ">
-                              Total Hours
-                            </label>
-                            <input
-                              className="px-3 py-2 border border-gray-300 rounded focus:outline-none"
-                              value={`${totalHours} Hours`}
-                              readOnly
-                            />
-                          </div>
+                      <div className="grid grid-cols-2 gap-6 pl-6 pr-6 pb-2">
+                        <form
+                          className="flex flex-col"
+                          onSubmit={(e) => e.preventDefault()}
+                        >
+                          <label className="text-sm mb-1 text-[#9d9d9dee] font-medium">
+                            Over Time
+                          </label>
+                          <input
+                            className="px-3 py-2 border border-gray-300 rounded focus:outline-none"
+                            type="number"
+                            value={overTime}
+                            onChange={handleOverTimeChange}
+                            step="0.01"
+                          />
+                        </form>
+                        <div className="flex flex-col">
+                          <label className="text-sm mb-1 text-[#9d9d9dee] font-medium">
+                            Total Hours
+                          </label>
+                          <input
+                            className="px-3 py-2 border border-gray-300 rounded focus:outline-none"
+                            type="text"
+                            value={`${totalHours} Hours`}
+                            readOnly
+                          />
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
-                {/*footer*/}
                 <div className="flex items-center justify-between p-6 border-t border-solid border-blueGray-200 rounded-b">
                   <button
                     className="text-white background-transparent rounded px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150 bg-[#AB85F0]"
@@ -179,7 +193,8 @@ const Worksheet = () => {
                   <button
                     className="text-white background-transparent rounded px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150 bg-[#AB85F0]"
                     type="button"
-                    onClick={() => setSubmitHours(false)}
+                    onClick={handleSubmitHours}
+                    disabled={mutation.isLoading}
                   >
                     Submit
                   </button>
@@ -222,7 +237,7 @@ const Worksheet = () => {
                       className="border-2 border-white p-2 text-sm"
                       style={{ color: colors.secondary }}
                     >
-                      WorkSheet ID
+                      Time Sheet ID
                     </th>
                     <th
                       className="border-2 border-white p-2 text-sm"
@@ -246,76 +261,73 @@ const Worksheet = () => {
                       className="border-2 border-white p-2 text-sm"
                       style={{ color: colors.secondary }}
                     >
-                      Overtime Hours
+                      Total Hours
                     </th>
                     <th
                       className="border-2 border-white p-2 text-sm"
                       style={{ color: colors.secondary }}
                     >
-                      Total Hours
+                      Over Time
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td
-                      className="border-2 border-white p-2 text-sm underline cursor-pointer"
-                      style={{ color: statusColors[status] || "black" }}
-                      onClick={() => setSubmitHours(true)}
-                    >
-                      {status}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {worksheetId}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {startDate}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {endDate}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {defaultHours} Hours
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {overTime} Hours
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {totalHours} Hours
-                    </td>
-                  </tr>
+                  {queryStatus === "loading" ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-4">
+                        Loading...
+                      </td>
+                    </tr>
+                  ) : queryStatus === "error" ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-4">
+                        Error fetching data
+                      </td>
+                    </tr>
+                  ) : (
+                    timeSheet.map((sheet) => (
+                      <tr key={sheet.timeSheetId} onClick={() => handleRowClick(sheet)}>
+                        <td
+                          className="border-2 border-white p-2 text-sm underline cursor-pointer"
+                          style={{ color: "black" }}
+                          onClick={() => {
+                            setSubmitHours(true);
+                            setWorksheetStatus(sheet.status);
+                            setStartDate(sheet.fromDate);
+                            setEndDate(sheet.toDate);
+                            setTimeSheetID(sheet.timeSheetId);
+                            setDefaultWorkingHours(sheet.assignedDefaultHours);
+                            setTotalHours(sheet.totalWorkedHours);
+                            setOverTime(sheet.overTimeWorkedHours);
+                          }}
+                        >
+                          {sheet.status}
+                        </td>
+                        <td className="border-2 border-white p-2 text-sm">
+                          {sheet.timeSheetId}
+                        </td>
+                        <td className="border-2 border-white p-2 text-sm">
+                          {sheet.fromDate}
+                        </td>
+                        <td className="border-2 border-white p-2 text-sm">
+                          {sheet.toDate}
+                        </td>
+                        <td className="border-2 border-white p-2 text-sm">
+                          {sheet.assignedDefaultHours}
+                        </td>
+                        <td className="border-2 border-white p-2 text-sm">
+                          {sheet.totalWorkedHours}
+                        </td>
+                        <td className="border-2 border-white p-2 text-sm">
+                          {sheet.overTimeWorkedHours}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
-              <div className="flex sm:flex-row flex-col w-full mt-8 items-center gap-2 text-xs">
-                <div className="sm:mr-auto sm:mb-0 mb-2">
-                  <span className="mr-2">Items per page</span>
-                  <select className="border p-1 rounded w-16 border-gray-200">
-                    {[2, 4, 6, 8].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex gap-2">
-                  <button>
-                    <span className="w-5 h-5">{"<<"}</span>
-                  </button>
-                  <button>
-                    <span className="w-5 h-5">{"<"}</span>
-                  </button>
-                  <span className="flex items-center gap-1">
-                    <input className="border p-1 rounded w-10" />
-                    of 1
-                  </span>
-                  <button>
-                    <span className="w-5 h-5">{">"}</span>
-                  </button>
-                  <button>
-                    <span className="w-5 h-5">{">>"}</span>
-                  </button>
-                </div>
-              </div>
+              {/* Pagination Component */}
+              <div className="mt-4">{/* Implement pagination if needed */}</div>
             </div>
           </div>
         </>

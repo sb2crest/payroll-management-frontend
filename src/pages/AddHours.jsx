@@ -3,13 +3,6 @@ import { motion } from "framer-motion";
 import { useTheme } from "../context/theme-context";
 import axios from "axios";
 import toast from "react-hot-toast";
-import {
-  createHours,
-  getAllEmployeeData,
-  getAllEmployees,
-  updateEmployeeData,
-} from "../helpers/theme-api";
-import { useQuery } from "@tanstack/react-query";
 
 const AddHours = () => {
   const [open, setOpen] = useState(true);
@@ -147,25 +140,6 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
   const [totalOvertimeWorkedHours, setTotalOvertimeWorkedHours] = useState(0);
   const [show, setShow] = useState(false);
 
-  const [showButton, setShowButton] = useState(true);
-  useEffect(() => {
-    if (data) {
-      const initialStartDate = data[0].timeSheet?.[0]?.fromDate || "";
-      const initialEndDate = data[0].timeSheet?.[0]?.toDate || "";
-      const initialHour = data[0].assignedDefaultHours || 0;
-      const workedHours =
-        data[0].timeSheet?.map((val) => parseFloat(val.totalWorkedHours)) || [];
-      const overtimeHours =
-        data[0].timeSheet?.map((val) => parseFloat(val.overTimeWorkedHours)) ||
-        [];
-
-      setStartDate(initialStartDate);
-      setEndDate(getOneWeekLater(initialStartDate));
-      setHour(initialHour);
-      setTotalHours(workedHours[0] || 0);
-      setTotalOvertimeWorkedHours(overtimeHours[0] || 0);
-      setFirstName(data[0].firstName);
-      setLastName(data[0].lastName);
     }
   }, [data]);
 

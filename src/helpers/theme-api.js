@@ -10,6 +10,7 @@ export const fetchTheme = async (companyId) => {
 };
 
 export const addConsigneeData = async (
+  ID,
   firstName,
   lastName,
   designation,
@@ -20,6 +21,7 @@ export const addConsigneeData = async (
   paymentDate
 ) => {
   const requestBody = {
+    managerUniqueId: ID,
     firstName: firstName,
     lastName: lastName,
     designation: designation,

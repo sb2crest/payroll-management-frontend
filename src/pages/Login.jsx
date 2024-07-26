@@ -1,29 +1,29 @@
 import { useTheme } from "../context/theme-context";
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/auth-context";
 function Login() {
-  const [email, setEmail] = useState("");
+  const [ID, setID] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const { companyID } = useParams();
   const { colors, fetchCompanyThemeData, setIsManagerStatus } = useTheme();
 
-  const handleSubmit = (event) => {
+  const { authenticateRole, role } = useAuth();
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (email === "employee@gmail.com" && password === "1234567890") {
-      console.log("I am an employee");
-      setIsManagerStatus(false);
-      localStorage.setItem("isManager", "false");
-      navigate("/dashboard");
-    } else if (email === "manager@gmail.com" && password === "0987654321") {
-      console.log("I am an manager");
-      setIsManagerStatus(true);
-      localStorage.setItem("isManager", "true");
-      navigate("/dashboard");
-    } else {
-      alert("Invalid credentials");
+    const res = await authenticateRole(ID, password);
+    console.log(res);
+    if (res) {
+      if (res.role === "Employee") {
+        navigate("/dashboard");
+      } else if (res.role === "Manager") {
+        setIsManagerStatus(true);
+        navigate("/dashboard");
+      }
     }
   };
 
@@ -45,17 +45,17 @@ function Login() {
                   className="block mb-2 text-sm font-medium dark:text-white"
                   style={{ color: colors.secondary }}
                 >
-                  Email ID
+                  Company ID
                 </label>
                 <input
-                  type="email"
+                  type="text"
                   name="login"
-                  id="email"
+                  id="companyId"
                   className="bg-white-50 border border-gray-300 text-gray-900 sm:text-sm rounded-sm focus:outline-none
                    focus:border-[#C8C9CC] block w-full p-2.5"
                   required=""
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={ID}
+                  onChange={(e) => setID(e.target.value)}
                 />
               </div>
               <div>
