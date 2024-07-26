@@ -8,11 +8,12 @@ import {
   handleApproved,
   handleReject as rejectTimesheet,
 } from "../helpers/theme-api";
+import { useAuth } from "../context/auth-context";
 
-const fetchTimeSheetData = async () => {
+const fetchTimeSheetData = async (id) => {
   try {
     const res = await axios.get(
-      "http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG9FE9B7F20B"
+      `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=${id}`
     );
     console.log("Fetched Data:", res.data);
     return res.data;
@@ -23,9 +24,10 @@ const fetchTimeSheetData = async () => {
 };
 
 const Timesheet = () => {
+  const { ID } = useAuth();
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["timeSheetData"],
-    queryFn: fetchTimeSheetData,
+    queryKey: ["timeSheetData", ID],
+    queryFn: () => fetchTimeSheetData(ID),
   });
 
   const [filteredData, setFilteredData] = useState([]);
@@ -46,17 +48,15 @@ const Timesheet = () => {
   const [reason, setReason] = useState("");
 
   const handleOpen = async (weeklySubmissionId) => {
-    // await rejectTimesheet(weeklySubmissionId);
-    // refetch();
     setId(weeklySubmissionId);
     setOpen(true);
   };
+
   const handleReject = async (e) => {
     e.preventDefault();
     await rejectTimesheet(id, reason);
     setReason("");
     setOpen(false);
-
     refetch();
   };
 
@@ -242,138 +242,75 @@ const Timesheet = () => {
                       {item.paymentMode}
                     </td>
                     <td className="border-2 border-white p-2 text-sm">
-                      {item.assignedHours}
+                      {item.defaultHours}
                     </td>
                     <td className="border-2 border-white p-2 text-sm">
-                      {item.overTimeWorkingHours}
+                      {item.overtimeHours}
                     </td>
                     <td className="border-2 border-white p-2 text-sm">
-                      {item.totalWorkingHours}
+                      {item.totalHours}
                     </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.status === "APPROVED" ? (
-                        <span className="text-green-400">Approved</span>
-                      ) : item.status === "REJECTED" ? (
-                        <span className="text-red-400">Rejected</span>
-                      ) : item.status === "DRAFT" ? (
-                        <span className="text-blue-400">Draft</span>
-                      ) : item.status === "PENDING" ? (
-                        <div className="flex">
-                          <button
-                            className="mr-2 p-1 bg-green-500 text-white text-sm rounded-md"
-                            onClick={() =>
-                              handleApprove(item.weeklySubmissionId)
-                            }
-                          >
-                            Approve
-                          </button>
-                          <button
-                            className="p-1 bg-red-500 text-white text-sm rounded-md"
-                            onClick={() => handleOpen(item.weeklySubmissionId)}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex">
-                          <button
-                            className="mr-2 p-1 bg-green-500 text-white text-sm rounded-md"
-                            onClick={() =>
-                              handleApprove(item.weeklySubmissionId)
-                            }
-                          >
-                            Approve
-                          </button>
-                          <button
-                            className="p-1 bg-red-500 text-white text-sm rounded-md"
-                            onClick={() =>
-                              handleReject(item.weeklySubmissionId)
-                            }
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
+                    <td className="border-2 border-white p-2 text-sm flex gap-2">
+                      <button
+                        className="p-1 bg-green-500 rounded-lg text-white text-xs"
+                        onClick={() => handleApprove(item.weeklySubmissionId)}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="p-1 bg-red-500 rounded-lg text-white text-xs"
+                        onClick={() => handleOpen(item.weeklySubmissionId)}
+                      >
+                        Reject
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div className="flex sm:flex-row flex-col w-full mt-8 items-center gap-2 text-xs">
-              <div className="sm:mr-auto sm:mb-0 mb-2">
-                <span className="mr-2">Items per page</span>
+            <div className="flex justify-between items-center mt-4">
+              <div>
+                <label htmlFor="pageSize">Page Size:</label>
                 <select
-                  className="border p-1 rounded w-16 border-gray-200"
+                  id="pageSize"
                   value={pageSize}
                   onChange={handlePageSizeChange}
+                  className="ml-2 border border-gray-300 rounded"
                 >
-                  {[2, 4, 6, 8].map((size) => (
+                  {[2, 5, 10].map((size) => (
                     <option key={size} value={size}>
                       {size}
                     </option>
                   ))}
                 </select>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button
-                  className={`${
-                    currentPage === 0
-                      ? "bg-gray-100"
-                      : "hover:bg-gray-200 hover:cursor-pointer bg-gray-100"
-                  } rounded p-1`}
-                  onClick={() => handlePageChange(0)}
-                  disabled={currentPage === 0}
-                >
-                  <span className="w-5 h-5">{"<<"}</span>
-                </button>
-                <button
-                  className={`${
-                    currentPage === 0
-                      ? "bg-gray-100"
-                      : "hover:bg-gray-200 hover:cursor-pointer bg-gray-100"
-                  } rounded p-1`}
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 0}
+                  className="p-1 bg-gray-200 rounded"
                 >
-                  <span className="w-5 h-5">{"<"}</span>
+                  Prev
                 </button>
-                <span className="flex items-center gap-1">
-                  <input
-                    min={1}
-                    max={pages}
-                    type="number"
-                    value={currentPage + 1}
-                    onChange={(e) => {
-                      const page = e.target.value
-                        ? Number(e.target.value) - 1
-                        : 0;
-                      handlePageChange(page);
-                    }}
-                    className="border p-1 rounded w-10"
-                  />
-                  of {pages}
-                </span>
+                {Array.from({ length: pages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i)}
+                    className={`p-1 ${
+                      currentPage === i
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200"
+                    } rounded`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
                 <button
-                  className={`${
-                    currentPage >= pages - 1
-                      ? "bg-gray-100"
-                      : "hover:bg-gray-200 hover:cursor-pointer bg-gray-100"
-                  } rounded p-1`}
                   onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage >= pages - 1}
+                  disabled={currentPage === pages - 1}
+                  className="p-1 bg-gray-200 rounded"
                 >
-                  <span className="w-5 h-5">{">"}</span>
-                </button>
-                <button
-                  className={`${
-                    currentPage >= pages - 1
-                      ? "bg-gray-100"
-                      : "hover:bg-gray-200 hover:cursor-pointer bg-gray-100"
-                  } rounded p-1`}
-                  onClick={() => handlePageChange(pages - 1)}
-                  disabled={currentPage >= pages - 1}
-                >
-                  <span className="w-5 h-5">{">>"}</span>
+                  Next
                 </button>
               </div>
             </div>
