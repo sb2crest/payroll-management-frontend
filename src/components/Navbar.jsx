@@ -1,13 +1,13 @@
-import { CiSearch } from "react-icons/ci";
-import { CgMail } from "react-icons/cg";
-import { IoNotifications } from "react-icons/io5";
-import { CgProfile } from "react-icons/cg";
-import { MdBrightness4 } from "react-icons/md";
-import { IoIosSettings } from "react-icons/io";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useTheme } from "../context/theme-context";
+import Notifications from "./Notifications";
+import { CiSearch } from "react-icons/ci";
+import { CgMail } from "react-icons/cg";
+import { MdBrightness4 } from "react-icons/md";
+import { IoIosSettings } from "react-icons/io";
+import { CgProfile } from "react-icons/cg";
 
 const Navbar = () => {
   const [hasNewMail, setHasNewMail] = useState(true);
@@ -53,10 +53,7 @@ const Navbar = () => {
             )}
           </div>
           <div className="relative mr-6">
-            <IoNotifications className="text-2xl cursor-pointer" />
-            {hasNewNotification && (
-              <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-            )}
+            <Notifications />
           </div>
           <MdBrightness4 className="text-2xl cursor-pointer mr-6" />
           <IoIosSettings className="text-2xl cursor-pointer mr-6" />
