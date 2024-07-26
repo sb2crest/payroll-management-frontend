@@ -7,7 +7,6 @@ import { IoIosSettings } from "react-icons/io";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { IoIosArrowForward } from "react-icons/io";
-import { MdOutlineAccessTimeFilled } from "react-icons/md";
 import { IoPeopleSharp } from "react-icons/io5";
 import { useTheme } from "../context/theme-context";
 import { useAuth } from "../context/auth-context";
@@ -36,12 +35,7 @@ function Sidebar() {
       path: "/profile",
     },
 
-    {
-      icon: IoIosSettings,
-      text: "Settings",
-      path: "/settings",
-    },
-  ];
+
 
   const sidebarLinkItemsForManger = [
     {

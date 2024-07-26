@@ -7,6 +7,7 @@ import {
   getAllEmployees,
   updateEmployeeData,
 } from "../helpers/theme-api";
+import toast from "react-hot-toast";
 
 function UpdateHours() {
   const [open, setOpen] = useState(true);
@@ -59,6 +60,14 @@ const AddEmployeeCard = ({
 }) => {
   const { colors } = useTheme();
 
+  // Check if data is defined before filtering
+  const filteredData = data
+    ? data.filter(
+        (employee) =>
+          employee.status !== "APPROVED" && employee.status !== "DRAFT"
+      )
+    : [];
+
   return (
     <div className="absolute left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] w-[600px] bg-white rounded-lg">
       <div>
@@ -90,7 +99,7 @@ const AddEmployeeCard = ({
                     <option value="" disabled>
                       Select an employee
                     </option>
-                    {data.map((employee) => (
+                    {filteredData.map((employee) => (
                       <option
                         key={employee.id}
                         value={employee.employeeUniqueId}
@@ -141,6 +150,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
   const [hour, setHour] = useState();
   const [totalHours, setTotalHours] = useState([]);
   const [totalOvertimeWorkedHours, setTotalOvertimeWorkedHours] = useState([]);
+  const [show, setShow] = useState(true);
 
   useEffect(() => {
     if (data) {
@@ -156,28 +166,46 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
       );
 
       setStartDate(initialStartDate);
-      setEndDate(initialEndDate);
+      setEndDate(getOneWeekLater(initialStartDate)); // Set end date to one week after start date
       setHour(initialHour);
       setTotalHours(workedHours[0]);
       setTotalOvertimeWorkedHours(overtimeHours[0]);
     }
   }, [data]);
 
+  useEffect(() => {
+    if (startDate) {
+      setEndDate(getOneWeekLater(startDate));
+    }
+  }, [startDate]);
+
+  const getOneWeekLater = (date) => {
+    const start = new Date(date);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 7);
+    return end.toISOString().split("T")[0]; // Format the date as yyyy-mm-dd
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
-    const weeklySubmissionId = data.timeSheet.map((val) => val.timeSheetId);
-
-    await updateEmployeeData(
-      +weeklySubmissionId,
-      startDate,
-      endDate,
-      hour,
-      +totalHours,
-      +totalOvertimeWorkedHours
-    );
-
-    // Refetch the data after update
-    refetch();
+    try {
+      const weeklySubmissionId = data.timeSheet.map((val) => val.timeSheetId);
+      toast.loading("Updating Hours", { id: "update" });
+      await updateEmployeeData(
+        +weeklySubmissionId,
+        startDate,
+        endDate,
+        +hour,
+        +totalHours,
+        +totalOvertimeWorkedHours
+      );
+      setShow(false);
+      // Refetch the data after update
+      refetch();
+      toast.success("Updated Successfully", { id: "update" });
+    } catch (error) {
+      toast.error("cant update", { id: "update" });
+    }
   };
 
   return (
@@ -233,7 +261,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                     TO DATE
                   </th>
                   <th className="text-left uppercase p-3 border-2 text-sm border-white">
-                    total Weekly Worked Hours
+                    Total Weekly Worked Hours
                   </th>
                 </tr>
               </thead>
@@ -245,6 +273,10 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                         className={`p-3 border-2 text-sm border-white ${
                           val.status === "PENDING"
                             ? "text-red-500"
+                            : val.status === "APPROVED"
+                            ? "text-green-400"
+                            : val.status === "DRAFT"
+                            ? "text-blue-500"
                             : "text-black"
                         }`}
                       >
@@ -277,51 +309,55 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
               </tbody>
             </table>
           </div>
-          <div className="w-full mt-8 p-4 bg-gray-200 rounded-lg">
-            <p className="text-sm font-semibold">UPDATE HOURS</p>
-            <form onSubmit={handleUpdate}>
-              <div className="flex items-center mt-5 gap-10 w-full">
-                <div className="flex gap-2 items-center">
-                  <p className="text-gray-400 text-xs">FROM DATE</p>
-                  <input
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    type="date"
-                    className="p-2 border-[1px] rounded-lg"
-                  />
+          {show && (
+            <div className="w-full mt-8 p-4 bg-gray-200 rounded-lg">
+              <p className="text-sm font-semibold">UPDATE HOURS</p>
+              <form onSubmit={handleUpdate}>
+                <div className="flex items-center mt-5 gap-10 w-full">
+                  <div className="flex gap-2 items-center">
+                    <p className="text-gray-400 text-xs">FROM DATE</p>
+                    <input
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      type="date"
+                      className="p-2 border-[1px] rounded-lg"
+                    />
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <p className="text-gray-400 text-xs">TO DATE</p>
+                    <input
+                      value={endDate}
+                      type="date"
+                      className="p-2 border-[1px] rounded-lg"
+                      disabled
+                    />
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <p className="text-gray-400 text-xs uppercase">
+                      Total Weekly Worked Hours
+                    </p>
+                    <input
+                      value={totalOvertimeWorkedHours}
+                      onChange={(e) =>
+                        setTotalOvertimeWorkedHours(e.target.value)
+                      }
+                      type="number"
+                      className="p-2 border-[1px] rounded-lg"
+                    />
+                  </div>
                 </div>
-                <div className="flex gap-2 items-center">
-                  <p className="text-gray-400 text-xs">TO DATE</p>
-                  <input
-                    onChange={(e) => setEndDate(e.target.value)}
-                    value={endDate}
-                    type="date"
-                    className="p-2 border-[1px] rounded-lg"
-                  />
+                <div className="mt-5 w-full flex justify-end">
+                  <button
+                    type="submit"
+                    className="p-2 px-5 text-white rounded-lg"
+                    style={{ background: colors.primary }}
+                  >
+                    UPDATE
+                  </button>
                 </div>
-                <div className="flex gap-2 items-center">
-                  <p className="text-gray-400 text-xs uppercase">
-                    total Weekly Worked Hours
-                  </p>
-                  <input
-                    value={totalHours}
-                    onChange={(e) => setTotalHours(e.target.value)}
-                    type="number"
-                    className="p-2 border-[1px] rounded-lg"
-                  />
-                </div>
-              </div>
-              <div className="mt-5 w-full flex justify-end">
-                <button
-                  type="submit"
-                  className="p-2 px-5 text-white rounded-lg"
-                  style={{ background: colors.primary }}
-                >
-                  UPDATE
-                </button>
-              </div>
-            </form>
-          </div>
+              </form>
+            </div>
+          )}
         </>
       )}
     </div>
