@@ -8,12 +8,15 @@ import { CgMail } from "react-icons/cg";
 import { MdBrightness4 } from "react-icons/md";
 import { IoIosSettings } from "react-icons/io";
 import { CgProfile } from "react-icons/cg";
+import { useAuth } from "../context/auth-context";
 
 const Navbar = () => {
   const [hasNewMail, setHasNewMail] = useState(true);
   const [hasNewNotification, setHasNewNotification] = useState(true);
 
   const { colors } = useTheme();
+
+  const { name } = useAuth();
 
   return (
     <div className="h-16 w-full border-b flex items-center justify-between px-8 bg-white">
@@ -22,7 +25,7 @@ const Navbar = () => {
           className="text-[16px] font-bold"
           style={{ color: colors.secondary }}
         >
-          Hi, Kavya Shree
+          Hi, {name}
         </p>
         <p
           className="text-[10px] font-normal mt-[0px]"
@@ -72,6 +75,8 @@ const PersonCard = () => {
     setOpen(false);
   };
   const { colors } = useTheme();
+
+  const { role, name } = useAuth();
 
   return (
     <div className="relative">
@@ -132,13 +137,13 @@ const PersonCard = () => {
               className="text-[16px] font-medium"
               style={{ color: colors.secondary }}
             >
-              Kavya Shree
+              {name}
             </p>
             <p
               className="text-[10px] mt-[0px]"
               style={{ color: colors.accent }}
             >
-              Manager
+              {role}
             </p>
           </div>
         </div>

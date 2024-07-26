@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "../context/theme-context";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/auth-context";
 
 const AddHours = () => {
   const [isModalOpenStatus, setIsModalOpenStatus] = useState(true);
@@ -13,12 +14,14 @@ const AddHours = () => {
   const [endDate, setEndDate] = useState("");
   const [defaultWorkingHours, setDefaultWorkingHours] = useState(0.0);
 
+  const { ID } = useAuth();
+
   const generateTimeSheet = async () => {
     try {
       const res = await axios.post(
         "http://localhost:8080/api/payrollManager/weekly-report",
         {
-          managerUniqueId: "MGR2",
+          managerUniqueId: ID,
           firstName: firstName,
           lastName: lastName,
           startDate: startDate,
