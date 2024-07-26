@@ -28,7 +28,7 @@ const Timesheet = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(2);
 
-  const { theme } = useTheme();
+  const { colors } = useTheme();
 
   const handleApprove = (employeeUniqueId) => {
     setFilteredData((prevData) =>
@@ -103,7 +103,7 @@ const Timesheet = () => {
           <>
             <div
               className="relative max-w-[400px] border-[1px] rounded-lg overflow-hidden"
-              style={{ borderColor: theme.colors.accent }}
+              style={{ borderColor: colors.accent }}
             >
               <button className="absolute top-1/2 left-2 transform -translate-y-1/2 border-none cursor-pointer rounded-l-lg">
                 <CiSearch />
@@ -118,61 +118,61 @@ const Timesheet = () => {
             </div>
             <table
               className="my-auto border-2 border-white w-full rounded-lg mt-5 overflow-hidden"
-              style={{ background: theme.colors.globalBackgroundColor }}
+              style={{ background: colors.globalBackgroundColor }}
             >
               <thead className="border-b-2 border-b-white">
                 <tr>
                   <th
                     className="border-2 border-white p-2 text-sm"
-                    style={{ color: theme.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     Employee Id
                   </th>
                   <th
                     className="border-2 border-white p-2 text-sm"
-                    style={{ color: theme.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     First Name
                   </th>
                   <th
                     className="border-2 border-white p-2 text-sm"
-                    style={{ color: theme.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     Last Name
                   </th>
                   <th
                     className="border-2 border-white p-2 text-sm"
-                    style={{ color: theme.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     Working Days
                   </th>
                   <th
                     className="border-2 border-white p-2 text-sm"
-                    style={{ color: theme.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     Payment Mode
                   </th>
                   <th
                     className="border-2 border-white p-2 text-sm"
-                    style={{ color: theme.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     Default Hours
                   </th>
                   <th
                     className="border-2 border-white p-2 text-sm"
-                    style={{ color: theme.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     Overtime Hours
                   </th>
                   <th
                     className="border-2 border-white p-2 text-sm"
-                    style={{ color: theme.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     Total Hours
                   </th>
                   <th
                     className="border-2 border-white p-2 text-sm"
-                    style={{ color: theme.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     Approval
                   </th>

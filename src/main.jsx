@@ -60,7 +60,7 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/login",
+    path: "/login/:companyID",
     element: <Login />,
   },
 ]);

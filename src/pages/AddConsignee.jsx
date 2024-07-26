@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { addConsigneeData } from "../helpers/theme-api";
 import toast from "react-hot-toast";
+import { useTheme } from "../context/theme-context";
 
 function AddConsignee() {
   const [firstName, setFirstName] = useState("");
@@ -45,6 +46,8 @@ function AddConsignee() {
     setWorkingHours(0);
   };
 
+  const { colors } = useTheme();
+
   return (
     <div className="flex justify-center m-5">
       <form
@@ -53,7 +56,11 @@ function AddConsignee() {
       >
         <div className="grid grid-cols-2 gap-6">
           <div className="flex flex-col">
-            <label htmlFor="first-name" className="text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="first-name"
+              className="text-md mb-1"
+              style={{ color: colors.secondary }}
+            >
               First Name
             </label>
             <input
@@ -64,7 +71,11 @@ function AddConsignee() {
             />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="last-name" className="text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="last-name"
+              className="text-md mb-1"
+              style={{ color: colors.secondary }}
+            >
               Last Name
             </label>
             <input
@@ -77,7 +88,11 @@ function AddConsignee() {
         </div>
         <div className="grid grid-cols-2 gap-6 mt-6">
           <div className="flex flex-col">
-            <label htmlFor="doj" className="text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="doj"
+              className="text-md mb-1"
+              style={{ color: colors.secondary }}
+            >
               Date of Joining
             </label>
             <input
@@ -89,7 +104,11 @@ function AddConsignee() {
             />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="designation" className="text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="designation"
+              className="text-md mb-1"
+              style={{ color: colors.secondary }}
+            >
               Role
             </label>
             <input
@@ -102,7 +121,11 @@ function AddConsignee() {
         </div>
         <div className="grid grid-cols-2 gap-6 mt-6">
           <div className="flex flex-col">
-            <label htmlFor="payment" className="text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="payment"
+              className="text-md mb-1"
+              style={{ color: colors.secondary }}
+            >
               Payment Mode
             </label>
             <input
@@ -113,7 +136,11 @@ function AddConsignee() {
             />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="days" className="text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="days"
+              className="text-md mb-1"
+              style={{ color: colors.secondary }}
+            >
               Working Days
             </label>
             <input
@@ -126,7 +153,11 @@ function AddConsignee() {
         </div>
         <div className="grid grid-cols-2 gap-6 mt-6">
           <div className="flex flex-col">
-            <label htmlFor="hours" className="text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="hours"
+              className="text-md mb-1"
+              style={{ color: colors.secondary }}
+            >
               Working Hours
             </label>
             <input
@@ -137,7 +168,11 @@ function AddConsignee() {
             />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="pay-date" className="text-sm text-gray-500 mb-1">
+            <label
+              htmlFor="pay-date"
+              className="text-md mb-1"
+              style={{ color: colors.secondary }}
+            >
               Pay Date
             </label>
             <input
@@ -151,12 +186,22 @@ function AddConsignee() {
         </div>
         <div className="flex justify-between mt-6">
           <button
-            className="bg-[#bd99fa] text-white px-10 py-2 rounded-sm "
+            className="px-10 py-2 rounded-sm"
             type="submit"
+            style={{
+              backgroundColor: colors.primary,
+              color: colors.componentBackgroundColor,
+            }}
           >
             Add
           </button>
-          <button className="bg-[#bd99fa] text-white px-10 py-2 rounded-sm ">
+          <button
+            className="px-10 py-2 rounded-sm"
+            style={{
+              backgroundColor: colors.primary,
+              color: colors.componentBackgroundColor,
+            }}
+          >
             Cancel
           </button>
         </div>
