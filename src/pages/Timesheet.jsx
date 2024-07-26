@@ -90,7 +90,7 @@ const Timesheet = () => {
 
   return (
     <div className="m-6">
-      <div className="bg-white p-10 mt-6 rounded-lg shadow-md relative">
+      <div className="bg-white p-10 mt-6 rounded-lg shadow-md relative border-[1px]">
         {isLoading ? (
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
             Loading...
@@ -117,7 +117,7 @@ const Timesheet = () => {
               />
             </div>
             <table
-              className="my-auto border-2 border-white w-full rounded-lg mt-5 overflow-hidden"
+              className="my-auto border-2 border-white bg-[#eee] w-full rounded-lg mt-5 overflow-hidden"
               style={{ background: colors.globalBackgroundColor }}
             >
               <thead className="border-b-2 border-b-white">
