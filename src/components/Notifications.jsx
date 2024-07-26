@@ -2,14 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { BiBell } from "react-icons/bi";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  const uniqueId = "MG6729941207";
+  const navigate = useNavigate();
+  const uniqueId = "MG9FE9B7F20B";
   const base_url = "http://localhost:8080/api/payrollManager";
 
   useEffect(() => {
@@ -44,9 +45,8 @@ const Notifications = () => {
       setNotifications(updatedNotifications);
       setUnreadCount(updatedNotifications.length);
 
-      // Navigate to the TimeSheet component or any other action you want to perform
-      // Example:
-      // navigate("/timesheet");
+      setIsOpen(false);
+      navigate(`/timesheet/${notification.notificationId}`);
     } catch (error) {
       console.error("Error updating notification status:", error);
     }
@@ -84,11 +84,11 @@ const Notifications = () => {
         {isOpen && notifications.length > 0 ? (
           <motion.div
             ref={dropdownRef}
-            initial={{ opacity: 0, y: "20px" }}
-            animate={{ opacity: 1, y: "0" }}
-            exit={{ opacity: 0, y: "20px" }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-7 right-2 bg-white border-[1px] p-2 rounded-lg shadow-md w-64 max-h-80 z-10 overflow-y-auto"
+            className="absolute top-7 right-2 bg-white border p-2 rounded-lg shadow-md w-64 max-h-80 z-10 overflow-y-auto"
           >
             {notifications.map((notification) => (
               <div
