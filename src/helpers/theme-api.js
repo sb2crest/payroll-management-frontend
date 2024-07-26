@@ -37,3 +37,18 @@ export const addConsigneeData = async (
     console.error("Error in saving data: " + error);
   }
 };
+
+export const getAllEmployees = async () => {
+  const response = await axios.get(
+    `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG6D64C47B45`
+  );
+  console.log("data--" + response.data);
+  return response.data;
+};
+export const getAllEmployeeData = async (employeeId) => {
+  const response = await axios.get(
+    `http://localhost:8080/api/payrollEmployee/find-employee?employeeUniqueId=${employeeId}`
+  );
+  console.log("data" + response.data);
+  return response.data;
+};

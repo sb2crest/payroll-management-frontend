@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { useTheme } from "../context/theme-context";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { getAllEmployeeData, getAllEmployees } from "../helpers/theme-api";
 
 function UpdateHours() {
   const [open, setOpen] = useState(true);
   const [openr, setOpenR] = useState(false);
+  const [selectedItem, setSelectedItem] = useState("");
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["employees"],
+    queryFn: getAllEmployees,
+  });
   const handleSelect = (e) => {
     e.preventDefault();
+    console.log("logging" + selectedItem);
     setOpen(false);
     setOpenR(true);
   };
@@ -18,10 +26,15 @@ function UpdateHours() {
             open={open}
             setOpen={setOpen}
             handleSelect={handleSelect}
+            selectedItem={selectedItem}
+            setSelectedItem={setSelectedItem}
+            data={data}
+            isLoading={isLoading}
+            error={error}
           />
         )}
       </div>
-      {openr && <AsignedEmployeeCard />}
+      {openr && <AsignedEmployeeCard selectedItem={selectedItem} />}
     </div>
   );
 }
@@ -29,38 +42,47 @@ function UpdateHours() {
 export default UpdateHours;
 
 const AddEmployeeCard = ({ open, setOpen, handleSelect }) => {
-  const { colors } = useTheme();
+  const { theme } = useTheme();
 
   return (
     <div className="absolute left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] w-[600px] bg-white rounded-lg">
       <div>
         <motion.div
-          className=" shadow-md  z-50 rounded-lg p-10 flex flex-col gap-4 h-[300px]  "
+          className="shadow-md z-50 rounded-lg p-10 flex flex-col gap-4 h-[300px]"
           initial={{ opacity: 0, y: "20px" }}
           animate={{ opacity: open ? 1 : 0, y: open ? "0" : "20px" }}
           transition={{ duration: 0.3 }}
         >
           <form
             onSubmit={handleSelect}
-            className="flex flex-col gap-4 justify-between  h-full"
+            className="flex flex-col gap-4 justify-between h-full"
           >
             <div className="grid grid-cols-2 items-center">
-              <div className="col-span-1 font-semibold ">SELECT EMPLOYEE :</div>
-              <div className="col-span-1">
-                <select
-                  name="#"
-                  id=""
-                  className="w-full border-[1px]  p-2 rounded-lg"
-                >
-                  <option value="#" defaultValue={true}>
-                    Select the employee...
-                  </option>
-                  <option value="#">PRATHIBA</option>
-                  <option value="#">SRIKANTH</option>
-                  <option value="#">JEEVAN</option>
-                  <option value="#">NIVEDITHA</option>
-                </select>
-              </div>
+              <div className="col-span-1 font-semibold">SELECT EMPLOYEE :</div>
+              <form className="col-span-1" onSubmit={handleSelect}>
+                {error ? (
+                  <p>Can't get employees</p>
+                ) : isLoading ? (
+                  <p>Loading...</p>
+                ) : (
+                  <select
+                    value={selectedItem}
+                    name="employee"
+                    id="employee"
+                    className="w-full border-[1px] p-2 rounded-lg"
+                    onChange={(e) => setSelectedItem(e.target.value)}
+                  >
+                    {data.map((employee) => (
+                      <option
+                        key={employee.id}
+                        value={employee.employeeUniqueId}
+                      >
+                        {`${employee.firstName} ${employee.lastName}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </form>
             </div>
             <div className="w-full grid grid-cols-2 gap-5">
               <button
@@ -74,13 +96,10 @@ const AddEmployeeCard = ({ open, setOpen, handleSelect }) => {
                 Cancel
               </button>
               <button
-                className="col-span-1 p-2 rounded-lg"
-                style={{
-                  backgroundColor: colors.primary,
-                  color: colors.componentBackgroundColor,
-                }}
+                className="col-span-1 p-2 rounded-lg bg-gray-400 text-white"
+                style={{ background: theme.colors.primary }}
               >
-                Add
+                SELECT
               </button>
             </div>
           </form>
@@ -91,90 +110,106 @@ const AddEmployeeCard = ({ open, setOpen, handleSelect }) => {
 };
 
 const AsignedEmployeeCard = () => {
-  const { colors } = useTheme();
+  const { theme } = useTheme();
   return (
     <div className="w-full p-4 bg-white rounded-lg border-[1px]">
       <div className="flex items-center gap-10">
-        <p>SELECTED EMPLOYEE :</p>
-        <p className="text-lg font-semibold">SRIKANTH</p>
+        <p className="font-semibold ">SELECTED EMPLOYEE :</p>
+        <p className="text-lg font-semibold">{`${data.firstName} ${data.lastName}`}</p>
       </div>
       <div className="grid grid-cols-3 gap-5 mt-8">
         <div className="col-span-1 flex items-center gap-4">
-          <p className="text-sm text-gray-400">EMPLOYEE NAME :</p>
-          <p className="text-sm">SRIKANTH</p>
+          <p className="text-sm text-gray-400">EMPLOYEE ID :</p>
+          <p className="text-sm">{data.employeeUniqueId}</p>
         </div>
         <div className="col-span-1 flex items-center gap-4">
           <p className="text-sm text-gray-400">DATE OF JOIN :</p>
-          <p className="text-sm">01/05/2024</p>
+          <p className="text-sm">{data.dateOfJoining}</p>
         </div>
         <div className="col-span-1 flex items-center gap-4">
           <p className="text-sm text-gray-400">PAYMENT MODE :</p>
-          <p className="text-sm">MONTHLY</p>
+          <p className="text-sm">{data.paymentMode}</p>
         </div>
         <div className="col-span-1 flex items-center gap-4">
           <p className="text-sm text-gray-400">WORKING DAYS IN THE WEEK :</p>
-          <p className="text-sm">FIVE DAYS</p>
+          <p className="text-sm">{data.workingDays}</p>
         </div>
         <div className="col-span-1 flex items-center gap-4">
           <p className="text-sm text-gray-400">WORKING HOURS :</p>
-          <p className="text-sm">45 HOURS</p>
+          <p className="text-sm">{data.assignedDefaultHours}</p>
         </div>
       </div>
       <div className="mt-8 w-full">
         <table className="w-full bg-gray-300 border-2 rounded-lg overflow-hidden">
           <thead className="p-2">
             <tr>
-              <th className="text-left p-3 border-2 border-white">
-                NAME OF EMPLOYEE
+              <th className="text-left p-3 border-2 border-white text-[10px]">
+                STATUS
               </th>
-              <th className="text-left p-3  border-2 border-white">
+
+              <th className="text-left p-3 border-2 border-white text-sm">
                 FROM DATE
               </th>
-              <th className="text-left p-3  border-2 border-white">TO DATE</th>
-              <th className="text-left p-3  border-2 border-white">
+              <th className="text-left p-3 border-2 border-white text-sm">
+                TO DATE
+              </th>
+              <th className="text-left p-3 border-2 border-white text-sm">
                 ASSIGNED HOURS
               </th>
-              <th className="text-left p-3  border-2 border-white">STATUS</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="p-3  border-2 border-white">SRIKANTH</td>
-              <td className="p-3  border-2 border-white">30/06/2024</td>
-              <td className="p-3  border-2 border-white">06/07/2024</td>
-              <td className="p-3  border-2 border-white">45</td>
-              <td className="p-3  border-2 border-white text-green-500">
-                APPROVED
-              </td>
+              {data.timeSheet.map((val) => (
+                <>
+                  <td
+                    className="p-3 border-2 border-white"
+                    style={{
+                      color: val.status === "PENDING" ? "red" : "black",
+                    }}
+                  >
+                    {val.status}
+                  </td>
+
+                  <td className="p-3 border-2 border-white">{val.fromDate}</td>
+                  <td className="p-3 border-2 border-white">{val.toDate}</td>
+                  <td className="p-3 border-2 border-white">
+                    {data.assignedDefaultHours}
+                  </td>
+                </>
+              ))}
             </tr>
           </tbody>
         </table>
       </div>
       <div className="w-full mt-8 p-4 bg-gray-300 rounded-lg">
-        <p>PERIOD</p>
-        <div className=" flex items-center gap-5 mt-4">
-          <input type="date" className="p-2 border-[1px] border-black" />{" "}
-          <span>to</span>{" "}
-          <input type="date" className="p-2 border-[1px] border-black" />
+        <p className="font-semibold">UPDATE HOUR</p>
+        <div className="flex items-center gap-5 mt-4">
+          <div>
+            <span className="text-sm mr-3">from</span>
+            <input
+              type="date"
+              className="p-2 border-[1px] rounded-lg border-gray-400"
+            />{" "}
+          </div>
+
+          <div>
+            <span className="text-sm mr-3">to</span>
+            <input
+              type="date"
+              className="p-2 border-[1px] rounded-lg border-gray-400"
+            />
+          </div>
         </div>
         <div className="mt-4 w-full flex justify-end">
           <div className="flex place-items-center gap-3">
             <button
-              className="p-2 rounded-lg"
-              style={{
-                backgroundColor: colors.primary,
-                color: colors.componentBackgroundColor,
-              }}
+              className="p-2 rounded-lg text-white"
+              style={{ background: theme.colors.primary }}
             >
               SAVE
             </button>
-            <button
-              className="p-2 rounded-lg"
-              style={{
-                backgroundColor: colors.primary,
-                color: colors.componentBackgroundColor,
-              }}
-            >
+            <button className="bg-blue-500 p-2 text-white rounded-lg">
               RESET
             </button>
           </div>
