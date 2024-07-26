@@ -3,6 +3,7 @@ import { FaPlus } from "react-icons/fa6";
 import { useTheme } from "../context/theme-context";
 import { AnimatePresence } from "framer-motion";
 import { motion } from "framer-motion";
+import { useTheme } from "../context/theme-context";
 
 function AddHour() {
   const [open, setOpen] = useState(true);
@@ -12,6 +13,7 @@ function AddHour() {
     setOpen(false);
     setOpenR(true);
   };
+  const { colors } = useTheme();
   return (
     <div className="w-full p-5 relative min-h-screen">
       <div className="w-full flex justify-end">
@@ -31,7 +33,7 @@ function AddHour() {
 export default AddHour;
 
 const AddEmployeeCard = ({ open, setOpen, handleSelect }) => {
-  const { theme } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <div className="absolute left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] w-[600px] bg-white rounded-lg">
@@ -66,14 +68,21 @@ const AddEmployeeCard = ({ open, setOpen, handleSelect }) => {
             </div>
             <div className="w-full grid grid-cols-2 gap-5">
               <button
-                className="col-span-1 p-2 rounded-lg bg-gray-400 text-white"
+                className="col-span-1 p-2 rounded-lg"
                 onClick={() => setOpen(false)}
+                style={{
+                  backgroundColor: colors.primary,
+                  color: colors.componentBackgroundColor,
+                }}
               >
                 Cancel
               </button>
               <button
-                className="col-span-1 p-2 rounded-lg bg-gray-400 text-white"
-                style={{ background: theme.colors.primary }}
+                className="col-span-1 p-2 rounded-lg"
+                style={{
+                  backgroundColor: colors.primary,
+                  color: colors.componentBackgroundColor,
+                }}
               >
                 Add
               </button>
@@ -86,7 +95,7 @@ const AddEmployeeCard = ({ open, setOpen, handleSelect }) => {
 };
 
 const AsignedEmployeeCard = () => {
-  const { theme } = useTheme();
+  const { colors } = useTheme();
   return (
     <div className="w-full p-4 bg-white rounded-lg border-[1px]">
       <div className="flex items-center gap-10">
@@ -155,12 +164,21 @@ const AsignedEmployeeCard = () => {
         <div className="mt-4 w-full flex justify-end">
           <div className="flex place-items-center gap-3">
             <button
-              className="p-2 rounded-lg text-white"
-              style={{ background: theme.colors.primary }}
+              className="p-2 rounded-lg"
+              style={{
+                backgroundColor: colors.primary,
+                color: colors.componentBackgroundColor,
+              }}
             >
               SAVE
             </button>
-            <button className="bg-blue-500 p-2 text-white rounded-lg">
+            <button
+              className="p-2 rounded-lg"
+              style={{
+                backgroundColor: colors.primary,
+                color: colors.componentBackgroundColor,
+              }}
+            >
               RESET
             </button>
           </div>

@@ -53,27 +53,9 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    if (Object.keys(colors).length > 0) {
-      localStorage.setItem("colors", JSON.stringify(colors));
-    }
-  }, [colors]);
-
-  useEffect(() => {
-    if (fontFamily) {
-      localStorage.setItem("fontFamily", fontFamily);
-    }
-  }, [fontFamily]);
-
-  useEffect(() => {
-    if (company && Object.keys(company).length > 0) {
-      localStorage.setItem("company", JSON.stringify(company));
-    }
-  }, [company]);
-
   return (
     <ThemeContext.Provider
-      value={{ colors, fetchCompanyThemeData, fontFamily, company }}
+      value={{ colors, fetchCompanyThemeData, fontFamily, company,isManager, setIsManagerStatus }}
     >
       {children}
     </ThemeContext.Provider>

@@ -75,12 +75,10 @@ const sidebarLinkItemsForManger = [
   },
 ];
 
-const manager = true;
-
 function Sidebar() {
   const [open, setOpen] = useState(true);
   const toggleSidebar = () => setOpen(!open);
-  const { colors } = useTheme();
+  const { colors, isManager } = useTheme();
   return (
     <motion.div
       initial={{ width: "230px" }}
@@ -97,7 +95,6 @@ function Sidebar() {
             initial={{ rotate: "180deg" }}
             animate={{
               rotate: open ? "180deg" : "0deg",
-              // left: open ? "210px" : "65px",
             }}
             transition={{ duration: 0.3 }}
             onClick={toggleSidebar}
@@ -114,20 +111,19 @@ function Sidebar() {
                 open ? "opacity-100" : "opacity-0"
               }`}
             >
-              Phoenix
+              LOGO
             </h1>
           </div>
           <div className="mt-10 px-8">
             <p
-              className={`${
-                open ? "opacity-100" : "opacity-0"
-              } text-sm text-gray-500`}
+              className={`${open ? "opacity-100" : "opacity-0"} text-sm`}
+              style={{ color: colors.accent }}
             >
               overview
             </p>
 
             <div className="w-full flex flex-col mt-4">
-              {manager
+              {isManager
                 ? sidebarLinkItemsForManger.map((val) => (
                     <SidebarLink
                       icon={val.icon}
@@ -165,7 +161,7 @@ const SidebarLink = ({ icon: Icon, path, text, open }) => {
       <motion.div
         className="w-full flex gap-3 items-center py-3"
         style={{
-          color: active ? colors.primary :colors.secondary,
+          color: active ? colors.primary : colors.secondary,
         }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
