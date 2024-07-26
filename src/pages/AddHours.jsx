@@ -136,7 +136,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
     queryFn: () => getAllEmployeeData(selectedItem),
     enabled: !!selectedItem,
   });
-
+  const [showButton, setShowButton] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -145,7 +145,27 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
   const [totalHours, setTotalHours] = useState(0);
   const [totalOvertimeWorkedHours, setTotalOvertimeWorkedHours] = useState(0);
   const [show, setShow] = useState(false);
-  const [showButton, setShowButton] = useState(true);
+
+  useEffect(() => {
+    if (data) {
+      const initialStartDate = data[0].timeSheet?.[0]?.fromDate || "";
+      const initialEndDate = data[0].timeSheet?.toDate || "";
+      const initialHour = data[0].assignedDefaultHours || 0;
+      const workedHours =
+        data.timeSheet?.map((val) => parseFloat(val.totalWorkedHours)) || [];
+      const overtimeHours =
+        data.timeSheet?.map((val) => parseFloat(val.overTimeWorkedHours)) || [];
+      const firstname = data[0].firstName;
+      const lastname = data[0].lastName;
+      setStartDate(initialStartDate);
+      setEndDate(getOneWeekLater(initialStartDate));
+      setHour(initialHour);
+      setTotalHours(workedHours[0] || 0);
+      setTotalOvertimeWorkedHours(overtimeHours[0] || 0);
+      setFirstName(firstname);
+      setLastName(lastname);
+    }
+  }, [data]);
 
   useEffect(() => {
     if (startDate) {
@@ -184,9 +204,9 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
         formattedEndDate,
         hour
       );
+      setShowButton(false);
       refetch();
       console.log(res);
-      setShowButton(false);
       setShow(false);
 
       toast.success("Updated Successfully", { id: "update" });
@@ -265,7 +285,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                             : val.status === "DRAFT"
                             ? "text-blue-500"
                             : val.status === "REJECTED"
-                            ? "text-red-400"
+                            ? "text-gray-400"
                             : "text-black"
                         }`}
                       >
@@ -281,7 +301,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                         {val.toDate}
                       </td>
                       <td className="p-3 border-2 text-sm border-white">
-                        {val.totalWorkedHours}
+                        {val.assignedDefaultHours}
                       </td>
                     </tr>
                   ))
@@ -353,10 +373,10 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                   <div className="flex gap-2 items-center">
                     <p className="text-gray-400 text-xs">Total Worked Hours</p>
                     <input
-                      value={totalHours}
+                      value={hour}
                       type="number"
                       className="p-2 border-[1px] rounded-lg"
-                      onChange={(e) => setTotalHours(e.target.value)}
+                      onChange={(e) => setHour(e.target.value)}
                     />
                   </div>
                 </div>
