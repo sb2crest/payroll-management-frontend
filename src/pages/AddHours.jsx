@@ -3,6 +3,12 @@ import { motion } from "framer-motion";
 import { useTheme } from "../context/theme-context";
 import axios from "axios";
 import toast from "react-hot-toast";
+import {
+  createHours,
+  getAllEmployeeData,
+  getAllEmployees,
+} from "../helpers/theme-api";
+import { useQuery } from "@tanstack/react-query";
 
 const AddHours = () => {
   const [open, setOpen] = useState(true);
@@ -139,9 +145,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
   const [totalHours, setTotalHours] = useState(0);
   const [totalOvertimeWorkedHours, setTotalOvertimeWorkedHours] = useState(0);
   const [show, setShow] = useState(false);
-
-    }
-  }, [data]);
+  const [showButton, setShowButton] = useState(true);
 
   useEffect(() => {
     if (startDate) {
@@ -293,7 +297,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                 )}
               </tbody>
             </table>
-            {setShowButton && (
+            {showButton && (
               <button
                 className="p-2 px-4 mt-5 rounded-lg text-white"
                 onClick={() => setShow(true)}

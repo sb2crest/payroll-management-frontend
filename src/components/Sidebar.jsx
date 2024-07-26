@@ -10,6 +10,7 @@ import { IoIosArrowForward } from "react-icons/io";
 import { IoPeopleSharp } from "react-icons/io5";
 import { useTheme } from "../context/theme-context";
 import { useAuth } from "../context/auth-context";
+import { MdOutlineAccessTimeFilled } from "react-icons/md";
 
 function Sidebar() {
   const [open, setOpen] = useState(true);
@@ -34,8 +35,7 @@ function Sidebar() {
       text: "Profile",
       path: "/profile",
     },
-
-
+  ];
 
   const sidebarLinkItemsForManger = [
     {
@@ -76,8 +76,8 @@ function Sidebar() {
     },
   ];
 
-  const sidebarItems =
-    role === "Manager" ? sidebarLinkItemsForManger : sidebarLinkItems;
+  const sidebarItems = sidebarLinkItemsForManger;
+  // role === "Manager" ? : sidebarLinkItems;
 
   return (
     <motion.div
