@@ -7,7 +7,6 @@ import { IoIosSettings } from "react-icons/io";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { IoIosArrowForward } from "react-icons/io";
-import { MdOutlineAccessTimeFilled } from "react-icons/md";
 import { IoPeopleSharp } from "react-icons/io5";
 import { useTheme } from "../context/theme-context";
 
@@ -57,11 +56,11 @@ const sidebarLinkItemsForManger = [
     text: "Add Hours",
     path: "/add-hours",
   },
-  {
-    icon: MdOutlineAccessTimeFilled,
-    text: "Update Hour",
-    path: "/update-hours",
-  },
+  // {
+  //   icon: MdOutlineAccessTimeFilled,
+  //   text: "Update Hour",
+  //   path: "/update-hours",
+  // },
   {
     icon: IoPerson,
     text: "Profile",

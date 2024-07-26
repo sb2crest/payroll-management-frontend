@@ -8,21 +8,24 @@ import {
   handleApproved,
   handleReject as rejectTimesheet,
 } from "../helpers/theme-api";
+import { useParams } from "react-router-dom";
 
-const fetchTimeSheetData = async () => {
-  try {
-    const res = await axios.get(
-      "http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG9FE9B7F20B"
-    );
-    console.log("Fetched Data:", res.data);
-    return res.data;
-  } catch (error) {
-    console.error("Failed to fetch data", error);
-    throw new Error("Failed to fetch data");
-  }
-};
+const TimesheetID = () => {
+  const { uniqueId } = useParams();
 
-const Timesheet = () => {
+  const fetchTimeSheetData = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/payrollManager/getNotificationsByUniqueId?uniqueId=${uniqueId}`
+      );
+      console.log("Fetched Data:", res.data);
+      return res.data;
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      throw new Error("Failed to fetch data");
+    }
+  };
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["timeSheetData"],
     queryFn: fetchTimeSheetData,
@@ -384,4 +387,4 @@ const Timesheet = () => {
   );
 };
 
-export default Timesheet;
+export default TimesheetID;

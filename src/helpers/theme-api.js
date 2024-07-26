@@ -40,18 +40,45 @@ export const addConsigneeData = async (
 
 export const getAllEmployees = async () => {
   const response = await axios.get(
-    `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG6729941207`
+    `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG9FE9B7F20B`
   );
   console.log("data--" + response.data);
   return response.data;
 };
 export const getAllEmployeeData = async (employeeId) => {
   const response = await axios.get(
-    `http://localhost:8080/api/payrollEmployee/find-employee?employeeUniqueId=${employeeId}`
+    `http://localhost:8080/api/payrollEmployee/findEmployeeByEmployeeId?employeeUniqueId=${employeeId}`
   );
   console.log("data" + response.data);
   return response.data;
 };
+export const handleReject = async (id, reason) => {
+  // console.log(weeklySubmissionId);
+  const response = await axios.post(
+    `http://localhost:8080/api/payrollManager/report-approval`,
+    {
+      weeklySubmissionId: id,
+      message: reason,
+      reportStatus: "REJECTED",
+    }
+  );
+  console.log("data" + response.data);
+  return response.data;
+};
+export const handleApproved = async (weeklySubmissionId) => {
+  console.log(weeklySubmissionId);
+  const response = await axios.post(
+    `http://localhost:8080/api/payrollManager/report-approval`,
+    {
+      weeklySubmissionId: weeklySubmissionId,
+      message: "Report Approvedddd",
+      reportStatus: "APPROVED",
+    }
+  );
+  console.log("data" + response.data);
+  return response.data;
+};
+
 export const updateEmployeeData = async (
   weeklySubmissionId,
   startDate,
@@ -64,7 +91,7 @@ export const updateEmployeeData = async (
     weeklySubmissionId,
     startDate,
     endDate,
-    +assignedDefaultHours,
+    assignedDefaultHours,
     totalWeeklyWorkedHours,
     totalOvertimeWorkedHours
   );
@@ -75,8 +102,30 @@ export const updateEmployeeData = async (
       startDate: startDate,
       endDate: endDate,
       assignedDefaultHours: assignedDefaultHours,
-      totalWeeklyWorkedHours: totalWeeklyWorkedHours,
+      totalWeeklyWorkedHours: assignedDefaultHours + totalOvertimeWorkedHours,
       totalOvertimeWorkedHours: totalOvertimeWorkedHours,
+    }
+  );
+  console.log("data" + response.data);
+  return response.data;
+};
+export const createHours = async (
+  firstName,
+  lastName,
+  startDate,
+  endDate,
+  defaultWorkingHours
+) => {
+  console.log("comming");
+  const response = await axios.post(
+    `http://localhost:8080/api/payrollManager/weekly-report`,
+    {
+      managerUniqueId: "MG9FE9B7F20B",
+      firstName: firstName,
+      lastName: lastName,
+      startDate: startDate,
+      endDate: endDate,
+      defaultWorkingHours: defaultWorkingHours,
     }
   );
   console.log("data" + response.data);
