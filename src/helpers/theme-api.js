@@ -52,3 +52,33 @@ export const getAllEmployeeData = async (employeeId) => {
   console.log("data" + response.data);
   return response.data;
 };
+export const updateEmployeeData = async (
+  weeklySubmissionId,
+  startDate,
+  endDate,
+  assignedDefaultHours,
+  totalWeeklyWorkedHours,
+  totalOvertimeWorkedHours
+) => {
+  console.log(
+    weeklySubmissionId,
+    startDate,
+    endDate,
+    +assignedDefaultHours,
+    totalWeeklyWorkedHours,
+    totalOvertimeWorkedHours
+  );
+  const response = await axios.put(
+    `http://localhost:8080/api/payrollManager/updateWeeklyWorkedHours`,
+    {
+      weeklySubmissionId: weeklySubmissionId,
+      startDate: startDate,
+      endDate: endDate,
+      assignedDefaultHours: assignedDefaultHours,
+      totalWeeklyWorkedHours: totalWeeklyWorkedHours,
+      totalOvertimeWorkedHours: totalOvertimeWorkedHours,
+    }
+  );
+  console.log("data" + response.data);
+  return response.data;
+};

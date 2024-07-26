@@ -71,7 +71,7 @@ export const ThemeProvider = ({ children }) => {
     }
   }, [company]);
 
-  const [isManager, setIsManagerStatus] = useState(false);
+  const [isManager, setIsManagerStatus] = useState(true);
 
   useEffect(() => {
     const storedIsManager = localStorage.getItem("isManager");
