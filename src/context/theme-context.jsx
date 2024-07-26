@@ -5,7 +5,7 @@ const ThemeContext = createContext({});
 
 export const ThemeProvider = ({ children }) => {
   const [colors, setColors] = useState({});
-  const [fontFamily, setFontFamily] = useState();
+  const [fontFamily, setFontFamily] = useState("");
   const [company, setCompany] = useState({});
 
   useEffect(() => {
@@ -34,36 +34,24 @@ export const ThemeProvider = ({ children }) => {
       if (data) {
         const themeColor = data.colors[0];
         const font = data.font[0];
-        const company = data.company[0];
+        const companyData = data.company[0];
 
-        setColors({
+        const newColors = {
           primary: themeColor.primary,
           secondary: themeColor.secondary,
           accent: themeColor.accent,
           globalBackgroundColor: themeColor.globalBackground,
           componentBackgroundColor: themeColor.componentBackgroundColor,
-        });
-        setFontFamily(font.font);
-        setCompany({ logoURL: company.logoURL, name: company.name });
+        };
 
-        localStorage.setItem("colors", JSON.stringify(colors));
-        localStorage.setItem("fontFamily", fontFamily);
-        localStorage.setItem("company", JSON.stringify(company));
+        setColors(newColors);
+        setFontFamily(font.font);
+        setCompany({ logoURL: companyData.logoURL, name: companyData.name });
       }
-      console.log(colors);
     } catch (error) {
       console.error("Error fetching company theme data:", error);
     }
   };
-
-  const [isManager, setIsManagerStatus] = useState(false);
-
-  useEffect(() => {
-    const storedIsManager = localStorage.getItem("isManager");
-    if (storedIsManager) {
-      setIsManagerStatus(storedIsManager === "true");
-    }
-  }, []);
 
   return (
     <ThemeContext.Provider
