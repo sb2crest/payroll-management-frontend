@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { FaPlus } from "react-icons/fa6";
 import { useTheme } from "../context/theme-context";
-import { AnimatePresence } from "framer-motion";
 import { motion } from "framer-motion";
 
-function AddHour() {
+function UpdateHours() {
   const [open, setOpen] = useState(true);
   const [openr, setOpenR] = useState(false);
   const handleSelect = (e) => {
@@ -12,7 +10,6 @@ function AddHour() {
     setOpen(false);
     setOpenR(true);
   };
-  const { colors } = useTheme();
   return (
     <div className="w-full p-5 relative min-h-screen">
       <div className="w-full flex justify-end">
@@ -29,7 +26,7 @@ function AddHour() {
   );
 }
 
-export default AddHour;
+export default UpdateHours;
 
 const AddEmployeeCard = ({ open, setOpen, handleSelect }) => {
   const { colors } = useTheme();

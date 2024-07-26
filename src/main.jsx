@@ -9,13 +9,14 @@ import Settings from "./pages/Settings.jsx";
 import Profile from "./pages/Profile.jsx";
 import Timesheet from "./pages/Timesheet.jsx";
 import AddConsignee from "./pages/AddConsignee.jsx";
-import AddHour from "./pages/AddHour.jsx";
+import AddHours from "./pages/AddHours.jsx";
 import Worksheet from "./pages/Worksheet.jsx";
 import Login from "./pages/Login.jsx";
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./context/theme-context.jsx";
 import axios from "axios";
+import UpdateHours from "./pages/UpdateHours.jsx";
 
 axios.defaults.baseURL = "http://localhost:8080/api";
 axios.defaults.withCredentials = true;
@@ -54,8 +55,12 @@ const router = createBrowserRouter([
         element: <AddConsignee />,
       },
       {
-        path: "/add-hour",
-        element: <AddHour />,
+        path: "/add-hours",
+        element: <AddHours />,
+      },
+      {
+        path: "/update-hours",
+        element: <UpdateHours />,
       },
     ],
   },

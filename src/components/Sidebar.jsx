@@ -54,13 +54,13 @@ const sidebarLinkItemsForManger = [
   },
   {
     icon: IoIosNotifications,
-    text: "Inbox",
-    path: "/inbox",
+    text: "Add Hours",
+    path: "/add-hours",
   },
   {
     icon: MdOutlineAccessTimeFilled,
-    text: "Add Hour",
-    path: "/add-hour",
+    text: "Update Hour",
+    path: "/update-hours",
   },
   {
     icon: IoPerson,
@@ -98,7 +98,7 @@ function Sidebar() {
             }}
             transition={{ duration: 0.3 }}
             onClick={toggleSidebar}
-            className="w-10 h-10 z-50 rounded-full absolute  top-4 -right-5  bg-red-300 flex items-center text-white justify-center"
+            className="w-10 h-10 z-50 rounded-full absolute  top-4 -right-5   flex items-center text-white justify-center"
             style={{ background: colors.primary }}
           >
             <span>
