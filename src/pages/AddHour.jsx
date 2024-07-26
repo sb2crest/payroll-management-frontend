@@ -3,7 +3,6 @@ import { FaPlus } from "react-icons/fa6";
 import { useTheme } from "../context/theme-context";
 import { AnimatePresence } from "framer-motion";
 import { motion } from "framer-motion";
-import { useTheme } from "../context/theme-context";
 
 function AddHour() {
   const [open, setOpen] = useState(true);

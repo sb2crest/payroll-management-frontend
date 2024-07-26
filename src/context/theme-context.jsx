@@ -53,9 +53,25 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
+  const [isManager, setIsManagerStatus] = useState(false);
+
+  useEffect(() => {
+    const storedIsManager = localStorage.getItem("isManager");
+    if (storedIsManager) {
+      setIsManagerStatus(storedIsManager === "true");
+    }
+  }, []);
+
   return (
     <ThemeContext.Provider
-      value={{ colors, fetchCompanyThemeData, fontFamily, company,isManager, setIsManagerStatus }}
+      value={{
+        colors,
+        fetchCompanyThemeData,
+        fontFamily,
+        company,
+        isManager,
+        setIsManagerStatus,
+      }}
     >
       {children}
     </ThemeContext.Provider>
