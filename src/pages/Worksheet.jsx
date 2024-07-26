@@ -1,20 +1,24 @@
 import { useState, useEffect } from "react";
 import { CiSearch } from "react-icons/ci";
 import { useTheme } from "../context/theme-context";
+import axios from "axios";
 
 const Worksheet = () => {
   const [submitHours, setSubmitHours] = useState(false);
   const { colors } = useTheme();
   const [modifyHours, setModifyHours] = useState(false);
   const [overTime, setOverTime] = useState(0);
-  const [totalHours, setTotalHours] = useState(45);
+  const [totalHours, setTotalHours] = useState(40);
+  const [status, setStatus] = useState("");
+  const [worksheetId, setWorksheetId] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [defaultHours, setDefaultHours] = useState(0);
 
   const [data, setData] = useState([
     {
       status: "DRAFT",
       employeeId: "EMP001",
-      firstName: "John",
-      lastName: "Doe",
       startDate: "2024-05-01",
       endDate: "2024-05-05",
       defaultHours: 160,
@@ -37,6 +41,32 @@ const Worksheet = () => {
     setOverTime(newOverTime);
     setTotalHours(45 + newOverTime); // Update total hours
   };
+
+  const fetchWorkSheetData = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:8080/api/payrollEmployee/searchEmployee?firstName=Jane&lastName=Roy"
+      );
+      console.log(res.data);
+      console.log(
+        "setWorksheetId:",
+        res.data.employeeDataList[0].timeSheet[0].fromDate
+      );
+      setStatus(res.data.employeeDataList[0].timeSheet[0].status);
+      setWorksheetId(res.data.employeeDataList[0].timeSheet[0].timeSheetId);
+      setStartDate(res.data.employeeDataList[0].timeSheet[0].fromDate);
+      setEndDate(res.data.employeeDataList[0].timeSheet[0].toDate);
+      setDefaultHours(
+        res.data.employeeDataList[0].timeSheet[0].assignedDefaultHours
+      );
+    } catch (e) {
+      console.error("Error fetching work sheet data: " + e);
+    }
+  };
+
+  useEffect(() => {
+    fetchWorkSheetData();
+  }, []);
 
   return (
     <>
@@ -198,18 +228,6 @@ const Worksheet = () => {
                       className="border-2 border-white p-2 text-sm"
                       style={{ color: colors.secondary }}
                     >
-                      First Name
-                    </th>
-                    <th
-                      className="border-2 border-white p-2 text-sm"
-                      style={{ color: colors.secondary }}
-                    >
-                      Last Name
-                    </th>
-                    <th
-                      className="border-2 border-white p-2 text-sm"
-                      style={{ color: colors.secondary }}
-                    >
                       Start Date
                     </th>
                     <th
@@ -239,41 +257,33 @@ const Worksheet = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.map((row, index) => (
-                    <tr key={index}>
-                      <td
-                        className="border-2 border-white p-2 text-sm underline cursor-pointer"
-                        style={{ color: statusColors[row.status] || "black" }}
-                        onClick={() => setSubmitHours(true)}
-                      >
-                        {row.status}
-                      </td>
-                      <td className="border-2 border-white p-2 text-sm">
-                        {row.employeeId}
-                      </td>
-                      <td className="border-2 border-white p-2 text-sm">
-                        {row.firstName}
-                      </td>
-                      <td className="border-2 border-white p-2 text-sm">
-                        {row.lastName}
-                      </td>
-                      <td className="border-2 border-white p-2 text-sm">
-                        {row.startDate}
-                      </td>
-                      <td className="border-2 border-white p-2 text-sm">
-                        {row.endDate}
-                      </td>
-                      <td className="border-2 border-white p-2 text-sm">
-                        {row.defaultHours} Hours
-                      </td>
-                      <td className="border-2 border-white p-2 text-sm">
-                        {row.overtimeHours} Hours
-                      </td>
-                      <td className="border-2 border-white p-2 text-sm">
-                        {row.totalHours} Hours
-                      </td>
-                    </tr>
-                  ))}
+                  <tr>
+                    <td
+                      className="border-2 border-white p-2 text-sm underline cursor-pointer"
+                      style={{ color: statusColors[status] || "black" }}
+                      onClick={() => setSubmitHours(true)}
+                    >
+                      {status}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {worksheetId}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {startDate}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {endDate}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {defaultHours} Hours
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {overTime} Hours
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {totalHours} Hours
+                    </td>
+                  </tr>
                 </tbody>
               </table>
               <div className="flex sm:flex-row flex-col w-full mt-8 items-center gap-2 text-xs">
