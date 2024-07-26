@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { useTheme } from "../context/theme-context";
+import { useState, useEffect } from "react";
+import { CiSearch } from "react-icons/ci";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import toast from "react-hot-toast";
 import {
@@ -10,131 +10,25 @@ import {
 } from "../helpers/theme-api";
 import { useQuery } from "@tanstack/react-query";
 
-const AddHours = () => {
-  const [open, setOpen] = useState(true);
-  const [openr, setOpenR] = useState(false);
-  const [selectedItem, setSelectedItem] = useState("");
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["employees"],
-    queryFn: getAllEmployees,
-  });
+const TimesheetID = () => {
+  const { uniqueId } = useParams();
 
-  const handleSelect = (e) => {
-    e.preventDefault();
-    setOpen(false);
-    setOpenR(true);
+  const fetchTimeSheetData = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/payrollManager/getNotificationsByUniqueId?uniqueId=${uniqueId}`
+      );
+      console.log("Fetched Data:", res.data);
+      return res.data;
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      throw new Error("Failed to fetch data");
+    }
   };
 
-  return (
-    <div className="w-full p-5 relative min-h-screen">
-      <div className="w-full flex justify-end">
-        {open && (
-          <AddEmployeeCard
-            open={open}
-            setOpen={setOpen}
-            handleSelect={handleSelect}
-            selectedItem={selectedItem}
-            setSelectedItem={setSelectedItem}
-            data={data}
-            isLoading={isLoading}
-            error={error}
-          />
-        )}
-      </div>
-      {openr && <AssignedEmployeeCard selectedItem={selectedItem} />}
-    </div>
-  );
-};
-
-export default AddHours;
-
-const AddEmployeeCard = ({
-  open,
-  setOpen,
-  handleSelect,
-  error,
-  isLoading,
-  data,
-  selectedItem,
-  setSelectedItem,
-}) => {
-  const { colors } = useTheme();
-  const filteredData =
-    data?.filter(
-      (employee) =>
-        employee.status !== "APPROVED" && employee.status !== "DRAFT"
-    ) || [];
-
-  return (
-    <div className="absolute left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] w-[600px] bg-white rounded-lg">
-      <motion.div
-        className="shadow-md z-50 rounded-lg p-10 flex flex-col gap-4 h-[300px]"
-        initial={{ opacity: 0, y: "20px" }}
-        animate={{ opacity: open ? 1 : 0, y: open ? "0" : "20px" }}
-        transition={{ duration: 0.3 }}
-      >
-        <form
-          onSubmit={handleSelect}
-          className="flex flex-col gap-4 justify-between h-full"
-        >
-          <div className="grid grid-cols-2 items-center">
-            <div className="col-span-1 font-semibold">SELECT EMPLOYEE :</div>
-            <div className="col-span-1">
-              {error ? (
-                <p>Can't get employees</p>
-              ) : isLoading ? (
-                <p>Loading...</p>
-              ) : (
-                <select
-                  value={selectedItem}
-                  name="employee"
-                  id="employee"
-                  className="w-full border-[1px] p-2 rounded-lg"
-                  onChange={(e) => setSelectedItem(e.target.value)}
-                >
-                  <option value="" disabled>
-                    Select an employee
-                  </option>
-                  {filteredData.map((employee) => (
-                    <option key={employee.id} value={employee.employeeUniqueId}>
-                      {`${employee.firstName} ${employee.lastName}`}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-          <div className="w-full grid grid-cols-2 gap-5">
-            <button
-              className="col-span-1 p-2 rounded-lg"
-              onClick={() => setOpen(false)}
-              style={{
-                backgroundColor: colors.primary,
-                color: colors.componentBackgroundColor,
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="col-span-1 p-2 rounded-lg bg-gray-400 text-white"
-              style={{ background: colors.primary }}
-            >
-              SELECT
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </div>
-  );
-};
-
-const AssignedEmployeeCard = ({ selectedItem }) => {
-  const { colors } = useTheme();
-  const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ["employeeData", selectedItem],
-    queryFn: () => getAllEmployeeData(selectedItem),
-    enabled: !!selectedItem,
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["timeSheetData"],
+    queryFn: fetchTimeSheetData,
   });
 
   const [startDate, setStartDate] = useState("");
@@ -148,153 +42,242 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
   const [showButton, setShowButton] = useState(true);
 
   useEffect(() => {
-    if (startDate) {
-      setEndDate(getOneWeekLater(startDate));
-    }
-  }, [startDate]);
-
-  const getOneWeekLater = (date) => {
-    const start = new Date(date);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 7);
-    return end.toISOString().split("T")[0];
-  };
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-
-    const formatDate = (date) => {
-      const d = new Date(date);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    };
-
-    const formattedStartDate = formatDate(startDate);
-    const formattedEndDate = formatDate(endDate);
-
-    try {
-      toast.loading("Updating Hours", { id: "update" });
-
-      const res = await createHours(
-        firstName,
-        lastName,
-        formattedStartDate,
-        formattedEndDate,
-        hour
+    if (data && Array.isArray(data)) {
+      console.log("Data in useEffect:", data); // Debugging statement
+      setFilteredData(
+        data.filter((item) => {
+          const employeeId = item.employeeUniqueId?.toLowerCase() || "";
+          const firstName = item.firstName?.toLowerCase() || "";
+          const lastName = item.lastName?.toLowerCase() || "";
+          return (
+            employeeId.includes(searchTerm.toLowerCase()) ||
+            firstName.includes(searchTerm.toLowerCase()) ||
+            lastName.includes(searchTerm.toLowerCase())
+          );
+        })
       );
-      refetch();
-      console.log(res);
-      setShowButton(false);
-      setShow(false);
+    } else {
+      console.error("Unexpected data format:", data);
+      setFilteredData([]);
+    }
+  }, [searchTerm, data]);
 
-      toast.success("Updated Successfully", { id: "update" });
-    } catch (error) {
-      toast.error("Can't update", { id: "update" });
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+    setCurrentPage(0); // Reset to first page when changing page size
+  };
+
+  const handlePageChange = (page) => {
+    if (page >= 0 && page < Math.ceil(filteredData.length / pageSize)) {
+      setCurrentPage(page);
     }
   };
+
+  const pages = Math.ceil(filteredData.length / pageSize);
+  const currentPageData = filteredData.slice(
+    currentPage * pageSize,
+    currentPage * pageSize + pageSize
+  );
 
   return (
-    <div className="w-full p-4 bg-gray-50 rounded-lg border-[1px]">
-      {isLoading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p>Error loading employee data</p>
-      ) : (
-        <>
-          <div className="flex items-center gap-10">
-            <p>SELECTED EMPLOYEE :</p>
-            <p className="text-lg font-semibold">{`${data[0].firstName} ${data[0].lastName}`}</p>
+    <div className="m-6 ">
+      {open && (
+        <motion.div
+          initial={{ display: "none" }}
+          animate={{ display: open ? "flex" : "none", opacity: open ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
+          className="border-[1px] w-[500px] p-4 z-[999999] h-[300px] flex items-center flex-col gap-6 justify-center absolute left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] bg-gray-100 rounded-lg shadow-md"
+        >
+          <form onSubmit={handleReject} className="w-full">
+            <input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              type="text"
+              placeholder="Reason for rejection"
+              className="outline-none p-2 border-[1px] border-black w-full rounded-lg"
+            />
+            <div className="flex items-center gap-4 w-full mt-4">
+              <button
+                onClick={() => setOpen(false)}
+                className="p-2 bg-gray-400 rounded-lg w-full"
+              >
+                cancel
+              </button>
+              <button
+                type="submit"
+                className="p-2 bg-red-500 w-full rounded-lg text-white"
+              >
+                Submit
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      )}
+      <div className="bg-white p-10 mt-6 rounded-lg shadow-md relative border-[1px]">
+        {isLoading ? (
+          <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
+            Loading...
           </div>
-          <div className="grid grid-cols-3 gap-5 mt-8">
-            <div className="col-span-1 flex items-center gap-4">
-              <p className="text-sm text-gray-400">EMPLOYEE ID :</p>
-              <p className="text-sm">{data[0].employeeUniqueId}</p>
-            </div>
-            <div className="col-span-1 flex items-center gap-4">
-              <p className="text-sm text-gray-400">DATE OF JOIN :</p>
-              <p className="text-sm">{data[0].dateOfJoining}</p>
-            </div>
-            <div className="col-span-1 flex items-center gap-4">
-              <p className="text-sm text-gray-400">PAYMENT MODE :</p>
-              <p className="text-sm">{data[0].paymentMode}</p>
-            </div>
-            <div className="col-span-1 flex items-center gap-4">
-              <p className="text-sm text-gray-400">
-                WORKING DAYS IN THE WEEK :
-              </p>
-              <p className="text-sm">{data[0].workingDays}</p>
-            </div>
-            <div className="col-span-1 flex items-center gap-4">
-              <p className="text-sm text-gray-400">WORKING HOURS :</p>
-              <p className="text-sm">{data[0].assignedDefaultHours}</p>
-            </div>
+        ) : error ? (
+          <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
+            Error loading data
           </div>
-          <div className="mt-8 w-full">
-            <table className="w-full bg-gray-200 border-2 rounded-lg overflow-hidden">
-              <thead className="p-2">
+        ) : (
+          <>
+            <div
+              className="relative max-w-[400px] border-[1px] rounded-lg overflow-hidden"
+              style={{ borderColor: colors.accent }}
+            >
+              <button className="absolute top-1/2 left-2 transform -translate-y-1/2 border-none cursor-pointer rounded-l-lg">
+                <CiSearch />
+              </button>
+              <input
+                type="text"
+                className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
+                placeholder="Search by name or id"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <table
+              className="my-auto border-2 border-white bg-[#eee] w-full rounded-lg mt-5 overflow-hidden"
+              style={{ background: colors.globalBackgroundColor }}
+            >
+              <thead className="border-b-2 border-b-white">
                 <tr>
-                  <th className="text-left p-3 border-2 text-sm border-white">
-                    STATUS
+                  <th
+                    className="border-2 border-white p-2 text-sm"
+                    style={{ color: colors.secondary }}
+                  >
+                    Employee Id
                   </th>
-                  <th className="text-left p-3 border-2 text-sm border-white">
-                    EMPLOYEE ID
+                  <th
+                    className="border-2 border-white p-2 text-sm"
+                    style={{ color: colors.secondary }}
+                  >
+                    Name
                   </th>
-                  <th className="text-left p-3 border-2 text-sm border-white">
-                    FROM DATE
+                  <th
+                    className="border-2 border-white p-2 text-sm"
+                    style={{ color: colors.secondary }}
+                  >
+                    Start Date
                   </th>
-                  <th className="text-left p-3 border-2 text-sm border-white">
-                    TO DATE
+                  <th
+                    className="border-2 border-white p-2 text-sm"
+                    style={{ color: colors.secondary }}
+                  >
+                    End Date
                   </th>
-                  <th className="text-left uppercase p-3 border-2 text-sm border-white">
-                    Total Weekly Worked Hours
+                  <th
+                    className="border-2 border-white p-2 text-sm"
+                    style={{ color: colors.secondary }}
+                  >
+                    Payment Mode
+                  </th>
+                  <th
+                    className="border-2 border-white p-2 text-sm"
+                    style={{ color: colors.secondary }}
+                  >
+                    Default Hours
+                  </th>
+                  <th
+                    className="border-2 border-white p-2 text-sm"
+                    style={{ color: colors.secondary }}
+                  >
+                    Overtime Hours
+                  </th>
+                  <th
+                    className="border-2 border-white p-2 text-sm"
+                    style={{ color: colors.secondary }}
+                  >
+                    Total Hours
+                  </th>
+                  <th
+                    className="border-2 border-white p-2 text-sm"
+                    style={{ color: colors.secondary }}
+                  >
+                    Approval
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {data[0].timeSheet?.length > 0 ? (
-                  data[0].timeSheet.map((val, index) => (
-                    <tr key={index}>
-                      <td
-                        className={`p-3 border-2 text-sm border-white ${
-                          val.status === "PENDING"
-                            ? "text-red-500"
-                            : val.status === "APPROVED"
-                            ? "text-green-400"
-                            : val.status === "DRAFT"
-                            ? "text-blue-500"
-                            : val.status === "REJECTED"
-                            ? "text-red-400"
-                            : "text-black"
-                        }`}
-                      >
-                        {val.status}
-                      </td>
-                      <td className="p-3 border-2 text-sm border-white">
-                        {data[0].employeeUniqueId}
-                      </td>
-                      <td className="p-3 border-2 text-sm border-white">
-                        {val.fromDate}
-                      </td>
-                      <td className="p-3 border-2 text-sm border-white">
-                        {val.toDate}
-                      </td>
-                      <td className="p-3 border-2 text-sm border-white">
-                        {val.totalWorkedHours}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      className="p-3 border-2 text-sm border-white"
-                      colSpan="5"
-                    >
-                      No time sheet data available
+                {currentPageData.map((item) => (
+                  <tr
+                    key={item.employeeUniqueId}
+                    className="border-2 border-white"
+                  >
+                    <td className="border-2 border-white p-2 text-sm">
+                      {item.employeeUniqueId}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {` ${item.firstName} ${item.lastName}`}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {item.startDate}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {item.endDate}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {item.paymentMode}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {item.assignedHours}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {item.overTimeWorkingHours}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {item.totalWorkingHours}
+                    </td>
+                    <td className="border-2 border-white p-2 text-sm">
+                      {item.status === "APPROVED" ? (
+                        <span className="text-green-400">Approved</span>
+                      ) : item.status === "REJECTED" ? (
+                        <span className="text-red-400">Rejected</span>
+                      ) : item.status === "DRAFT" ? (
+                        <span className="text-blue-400">Draft</span>
+                      ) : item.status === "PENDING" ? (
+                        <div className="flex">
+                          <button
+                            className="mr-2 p-1 bg-green-500 text-white text-sm rounded-md"
+                            onClick={() =>
+                              handleApprove(item.weeklySubmissionId)
+                            }
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className="p-1 bg-red-500 text-white text-sm rounded-md"
+                            onClick={() => handleOpen(item.weeklySubmissionId)}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex">
+                          <button
+                            className="mr-2 p-1 bg-green-500 text-white text-sm rounded-md"
+                            onClick={() =>
+                              handleApprove(item.weeklySubmissionId)
+                            }
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className="p-1 bg-red-500 text-white text-sm rounded-md"
+                            onClick={() =>
+                              handleReject(item.weeklySubmissionId)
+                            }
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
             {showButton && (
@@ -365,13 +348,81 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                   className="p-2 px-4 mt-5 rounded-lg text-white"
                   style={{ background: colors.primary }}
                 >
-                  ADD
+                  {[2, 4, 6, 8].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  className={`${
+                    currentPage === 0
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-200 hover:cursor-pointer bg-gray-100"
+                  } rounded p-1`}
+                  onClick={() => handlePageChange(0)}
+                  disabled={currentPage === 0}
+                >
+                  <span className="w-5 h-5">{"<<"}</span>
                 </button>
-              </form>
+                <button
+                  className={`${
+                    currentPage === 0
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-200 hover:cursor-pointer bg-gray-100"
+                  } rounded p-1`}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 0}
+                >
+                  <span className="w-5 h-5">{"<"}</span>
+                </button>
+                <span className="flex items-center gap-1">
+                  <input
+                    min={1}
+                    max={pages}
+                    type="number"
+                    value={currentPage + 1}
+                    onChange={(e) => {
+                      const page = e.target.value
+                        ? Number(e.target.value) - 1
+                        : 0;
+                      handlePageChange(page);
+                    }}
+                    className="border p-1 rounded w-10"
+                  />
+                  of {pages}
+                </span>
+                <button
+                  className={`${
+                    currentPage >= pages - 1
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-200 hover:cursor-pointer bg-gray-100"
+                  } rounded p-1`}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= pages - 1}
+                >
+                  <span className="w-5 h-5">{">"}</span>
+                </button>
+                <button
+                  className={`${
+                    currentPage >= pages - 1
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-200 hover:cursor-pointer bg-gray-100"
+                  } rounded p-1`}
+                  onClick={() => handlePageChange(pages - 1)}
+                  disabled={currentPage >= pages - 1}
+                >
+                  <span className="w-5 h-5">{">>"}</span>
+                </button>
+              </div>
             </div>
-          )}
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
+
+export default TimesheetID;
