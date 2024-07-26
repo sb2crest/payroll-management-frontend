@@ -37,3 +37,48 @@ export const addConsigneeData = async (
     console.error("Error in saving data: " + error);
   }
 };
+
+export const getAllEmployees = async () => {
+  const response = await axios.get(
+    `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG6D64C47B45`
+  );
+  console.log("data--" + response.data);
+  return response.data;
+};
+export const getAllEmployeeData = async (employeeId) => {
+  const response = await axios.get(
+    `http://localhost:8080/api/payrollEmployee/find-employee?employeeUniqueId=${employeeId}`
+  );
+  console.log("data" + response.data);
+  return response.data;
+};
+export const updateEmployeeData = async (
+  weeklySubmissionId,
+  startDate,
+  endDate,
+  assignedDefaultHours,
+  totalWeeklyWorkedHours,
+  totalOvertimeWorkedHours
+) => {
+  console.log(
+    weeklySubmissionId,
+    startDate,
+    endDate,
+    +assignedDefaultHours,
+    totalWeeklyWorkedHours,
+    totalOvertimeWorkedHours
+  );
+  const response = await axios.put(
+    `http://localhost:8080/api/payrollManager/updateWeeklyWorkedHours`,
+    {
+      weeklySubmissionId: weeklySubmissionId,
+      startDate: startDate,
+      endDate: endDate,
+      assignedDefaultHours: assignedDefaultHours,
+      totalWeeklyWorkedHours: totalWeeklyWorkedHours,
+      totalOvertimeWorkedHours: totalOvertimeWorkedHours,
+    }
+  );
+  console.log("data" + response.data);
+  return response.data;
+};

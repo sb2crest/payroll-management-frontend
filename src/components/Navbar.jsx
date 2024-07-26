@@ -10,9 +10,10 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../context/theme-context";
 
 const Navbar = () => {
-  const { colors } = useTheme();
   const [hasNewMail, setHasNewMail] = useState(true);
   const [hasNewNotification, setHasNewNotification] = useState(true);
+
+  const { colors } = useTheme();
 
   return (
     <div className="h-16 w-full border-b flex items-center justify-between px-8 bg-white">
