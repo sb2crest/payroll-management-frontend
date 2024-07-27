@@ -9,15 +9,13 @@ import {
   getAllEmployees,
 } from "../helpers/theme-api";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "../context/auth-context";
 
 const AddHours = () => {
+  const { ID } = useAuth();
   const [open, setOpen] = useState(true);
   const [openr, setOpenR] = useState(false);
   const [selectedItem, setSelectedItem] = useState("");
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["employees"],
-    queryFn: getAllEmployees,
-  });
 
   const handleSelect = (e) => {
     e.preventDefault();
@@ -35,9 +33,6 @@ const AddHours = () => {
             handleSelect={handleSelect}
             selectedItem={selectedItem}
             setSelectedItem={setSelectedItem}
-            data={data}
-            isLoading={isLoading}
-            error={error}
           />
         )}
       </div>
@@ -52,18 +47,18 @@ const AddEmployeeCard = ({
   open,
   setOpen,
   handleSelect,
-  error,
-  isLoading,
-  data,
   selectedItem,
   setSelectedItem,
 }) => {
+  const { ID } = useAuth();
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["employees"],
+    queryFn: getAllEmployees(ID),
+  });
   const { colors } = useTheme();
-  const filteredData =
-    data?.filter(
-      (employee) =>
-        employee.status !== "APPROVED" && employee.status !== "DRAFT"
-    ) || [];
+  // const filteredData = data?.filter(
+  //   (employee) => employee.status !== "APPROVED" && employee.status !== "DRAFT"
+  // );
 
   return (
     <div className="absolute left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] w-[600px] bg-white rounded-lg">
@@ -95,7 +90,7 @@ const AddEmployeeCard = ({
                   <option value="" disabled>
                     Select an employee
                   </option>
-                  {filteredData.map((employee) => (
+                  {data.map((employee) => (
                     <option key={employee.id} value={employee.employeeUniqueId}>
                       {`${employee.firstName} ${employee.lastName}`}
                     </option>
