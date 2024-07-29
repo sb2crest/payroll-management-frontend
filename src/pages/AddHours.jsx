@@ -3,6 +3,12 @@ import { motion } from "framer-motion";
 import { useTheme } from "../context/theme-context";
 import axios from "axios";
 import toast from "react-hot-toast";
+import {
+  createHours,
+  getAllEmployeeData,
+  getAllEmployees,
+} from "../helpers/theme-api";
+import { useQuery } from "@tanstack/react-query";
 
 const AddHours = () => {
   const [open, setOpen] = useState(true);
@@ -53,11 +59,11 @@ const AddEmployeeCard = ({
   setSelectedItem,
 }) => {
   const { colors } = useTheme();
-  const filteredData =
-    data?.filter(
-      (employee) =>
-        employee.status !== "APPROVED" && employee.status !== "DRAFT"
-    ) || [];
+  // const filteredData =
+  //   data?.filter(
+  //     (employee) =>
+  //       employee.status !== "APPROVED" && employee.status !== "DRAFT"
+  //   ) || [];
 
   return (
     <div className="absolute left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] w-[600px] bg-white rounded-lg">
@@ -89,7 +95,7 @@ const AddEmployeeCard = ({
                   <option value="" disabled>
                     Select an employee
                   </option>
-                  {filteredData.map((employee) => (
+                  {data.map((employee) => (
                     <option key={employee.id} value={employee.employeeUniqueId}>
                       {`${employee.firstName} ${employee.lastName}`}
                     </option>
@@ -130,16 +136,36 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
     queryFn: () => getAllEmployeeData(selectedItem),
     enabled: !!selectedItem,
   });
-
+  const [showButton, setShowButton] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [hour, setHour] = useState(0);
+  const [hour, setHour] = useState();
   const [totalHours, setTotalHours] = useState(0);
   const [totalOvertimeWorkedHours, setTotalOvertimeWorkedHours] = useState(0);
   const [show, setShow] = useState(false);
 
+  useEffect(() => {
+    if (data) {
+      console.log("datafordate", data)
+      const initialStartDate = data[0].timeSheet?.[0]?.fromDate || "";
+      console.log("initialStartDate  date:", initialStartDate)
+      const initialEndDate = data[0].timeSheet?.toDate || "";
+      const initialHour = data[0].assignedDefaultHours || 0;
+      const workedHours =
+        data.timeSheet?.map((val) => parseFloat(val.totalWorkedHours)) || [];
+      const overtimeHours =
+        data.timeSheet?.map((val) => parseFloat(val.overTimeWorkedHours)) || [];
+      const firstname = data[0].firstName;
+      const lastname = data[0].lastName;
+      setStartDate(initialStartDate);
+      setEndDate(getOneWeekLater(initialStartDate));
+      setHour(initialHour);
+      setTotalHours(workedHours[0] || 0);
+      setTotalOvertimeWorkedHours(overtimeHours[0] || 0);
+      setFirstName(firstname);
+      setLastName(lastname);
     }
   }, [data]);
 
@@ -153,6 +179,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
     const start = new Date(date);
     const end = new Date(start);
     end.setDate(start.getDate() + 7);
+    console.log("nandu date:", start);
     return end.toISOString().split("T")[0];
   };
 
@@ -180,9 +207,9 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
         formattedEndDate,
         hour
       );
+      setShowButton(false);
       refetch();
       console.log(res);
-      setShowButton(false);
       setShow(false);
 
       toast.success("Updated Successfully", { id: "update" });
@@ -261,7 +288,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                             : val.status === "DRAFT"
                             ? "text-blue-500"
                             : val.status === "REJECTED"
-                            ? "text-red-400"
+                            ? "text-gray-400"
                             : "text-black"
                         }`}
                       >
@@ -277,7 +304,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                         {val.toDate}
                       </td>
                       <td className="p-3 border-2 text-sm border-white">
-                        {val.totalWorkedHours}
+                        {val.assignedDefaultHours}
                       </td>
                     </tr>
                   ))
@@ -293,7 +320,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                 )}
               </tbody>
             </table>
-            {setShowButton && (
+            {showButton && (
               <button
                 className="p-2 px-4 mt-5 rounded-lg text-white"
                 onClick={() => setShow(true)}
@@ -349,10 +376,10 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                   <div className="flex gap-2 items-center">
                     <p className="text-gray-400 text-xs">Total Worked Hours</p>
                     <input
-                      value={totalHours}
+                      value={hour}
                       type="number"
                       className="p-2 border-[1px] rounded-lg"
-                      onChange={(e) => setTotalHours(e.target.value)}
+                      onChange={(e) => setHour(e.target.value)}
                     />
                   </div>
                 </div>
