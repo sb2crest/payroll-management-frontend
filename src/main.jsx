@@ -17,9 +17,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./context/theme-context.jsx";
 import axios from "axios";
 import UpdateHours from "./pages/UpdateHours.jsx";
-import TimeSheetID from "./pages/TimeSheetID.jsx";
 import Table from "./pages/Table.jsx";
-import { AuthProvider } from "./context/auth-context.jsx"
+import { AuthProvider } from "./context/auth-context.jsx";
 
 axios.defaults.baseURL = "http://localhost:8080/api";
 axios.defaults.withCredentials = true;
@@ -51,7 +50,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/timesheet/:uniqueId",
-        element: <TimeSheetID />,
+        element: <Timesheet />,
       },
       {
         path: "/worksheet",
