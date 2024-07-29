@@ -1,15 +1,24 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../context/theme-context";
+import { useAuth } from "../context/auth-context";
+import { useEffect } from "react";
 
 function Layout() {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login/1");
+    }
+  }, []);
+
   const { theme } = useTheme();
+
   return (
-    <div
-      className="flex w-full "
-      // style={{ background: theme.colors.globalBackgroundColor }}
-    >
+    <div className="flex w-full ">
       <div>
         <Sidebar />
       </div>

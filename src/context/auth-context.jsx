@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(null);
   const [ID, setID] = useState("");
   const [name, setName] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const authenticateRole = async (ID, password) => {
     try {
@@ -19,14 +20,17 @@ export const AuthProvider = ({ children }) => {
       );
       console.log("Response for authenticating the role:", response);
       const data = response.data;
+    
       if (data) {
         setRole(data.role);
         setID(data.id);
         setName(data.fullName);
+        setIsAuthenticated(true);
       }
       return data;
     } catch (e) {
       console.log("Error authenticating role:", e);
+      setIsAuthenticated(false);
     }
   };
 
@@ -53,6 +57,7 @@ export const AuthProvider = ({ children }) => {
         ID,
         name,
         authenticateRole,
+        isAuthenticated,
       }}
     >
       {children}
