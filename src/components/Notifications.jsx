@@ -3,6 +3,7 @@ import axios from "axios";
 import { BiBell } from "react-icons/bi";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/auth-context";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -10,14 +11,15 @@ const Notifications = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
-  const uniqueId = "MG9FE9B7F20B";
+  const { ID }  = useAuth();
   const base_url = "http://localhost:8080/api/payrollManager";
+
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         const response = await axios.get(
-          `${base_url}/getNotificationsByUniqueId?uniqueId=${uniqueId}`
+          `${base_url}/getNotificationsByUniqueId?uniqueId=${ID}`
         );
         const unreadNotifications = response.data.filter(
           (notification) => !notification.read
@@ -30,12 +32,12 @@ const Notifications = () => {
     };
 
     fetchNotifications();
-  }, [uniqueId]);
+  }, [ID]);
 
   const handleNotificationClick = async (notification) => {
     try {
       await axios.put(
-        `${base_url}/readNotificationsByEmployee?uniqueId=${uniqueId}&message=${encodeURIComponent(
+        `${base_url}/readNotificationsByEmployee?uniqueId=${ID}&message=${encodeURIComponent(
           notification.message
         )}`
       );

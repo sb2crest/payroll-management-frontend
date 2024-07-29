@@ -59,6 +59,11 @@ function Sidebar() {
       path: "/add-hours",
     },
     {
+      icon: MdOutlineAccessTimeFilled,
+      text: "Update Hour",
+      path: "/update-hours",
+    },
+    {
       icon: IoPerson,
       text: "Profile",
       path: "/profile",
@@ -71,8 +76,8 @@ function Sidebar() {
     },
   ];
 
-  const sidebarItems = sidebarLinkItemsForManger;
-  // role === "Manager" ? : sidebarLinkItems;
+  const sidebarItems = 
+  role === "Manager" ? sidebarLinkItemsForManger : sidebarLinkItems;
 
   return (
     <motion.div

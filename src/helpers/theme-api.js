@@ -39,10 +39,9 @@ export const addConsigneeData = async (
     console.error("Error in saving data: " + error);
   }
 };
-
 export const getAllEmployees = async () => {
   const response = await axios.get(
-    `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG9FE9B7F20B`
+    `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG7745484B8E`
   );
   console.log("data--" + response.data);
   return response.data;
@@ -112,6 +111,7 @@ export const updateEmployeeData = async (
   return response.data;
 };
 export const createHours = async (
+  ID,
   firstName,
   lastName,
   startDate,
@@ -122,12 +122,12 @@ export const createHours = async (
   const response = await axios.post(
     `http://localhost:8080/api/payrollManager/weekly-report`,
     {
-      managerUniqueId: "MG9FE9B7F20B",
-      firstName: firstName,
-      lastName: lastName,
-      startDate: startDate,
-      endDate: endDate,
-      defaultWorkingHours: defaultWorkingHours,
+      managerUniqueId: 'MG7745484B8E',
+      firstName: 'Nike',
+      lastName: 'Json',
+      startDate: '2024-07-08',
+      endDate:'2024-07-15',
+      defaultWorkingHours: 40.0,
     }
   );
   console.log("data" + response.data);

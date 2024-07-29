@@ -183,7 +183,7 @@ const TimesheetTable = () => {
           <button
             type="button"
             onClick={handleReset}
-            className="py-2 px-4 bg-gray-500 text-white font-semibold rounded-md hover:bg-gray-600"
+            className="py-2 px-4 bg-gray-500 text-white font-semibold rounded-md hover:bg-red-600"
           >
             Reset
           </button>

@@ -13,6 +13,9 @@ function Login() {
 
   const { authenticateRole, role } = useAuth();
 
+  const uniqueId = localStorage.setItem("uniqueId",ID);
+  console.log(uniqueId);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     const res = await authenticateRole(ID, password);
