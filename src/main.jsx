@@ -19,6 +19,7 @@ import axios from "axios";
 import UpdateHours from "./pages/UpdateHours.jsx";
 import Table from "./pages/Table.jsx";
 import { AuthProvider } from "./context/auth-context.jsx";
+import MainDashboard from "./components/MainDashboard.jsx";
 
 axios.defaults.baseURL = "http://localhost:8080/api";
 axios.defaults.withCredentials = true;
@@ -30,7 +31,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/dashboard",
-        element: <Dashboard />,
+        element: <MainDashboard />,
       },
       {
         path: "/settings",
