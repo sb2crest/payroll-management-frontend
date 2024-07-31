@@ -2,7 +2,6 @@
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import Layout from "./layouts/Layout.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Inbox from "./pages/Inbox.jsx";
 import Settings from "./pages/Settings.jsx";
@@ -47,10 +46,6 @@ const router = createBrowserRouter([
       },
       {
         path: "/timesheet",
-        element: <Timesheet />,
-      },
-      {
-        path: "/timesheet/:uniqueId",
         element: <Timesheet />,
       },
       {

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { CiSearch } from "react-icons/ci";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useTheme } from "../context/theme-context";
@@ -25,6 +24,7 @@ const fetchTimeSheetData = async (id) => {
 
 const Timesheet = () => {
   const { ID } = useAuth();
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["timeSheetData", ID],
     queryFn: () => fetchTimeSheetData(ID),
@@ -44,25 +44,24 @@ const Timesheet = () => {
   };
 
   const [open, setOpen] = useState(false);
-  const [id, setId] = useState("");
   const [reason, setReason] = useState("");
+  const [weeklySubmissionId, setWeeklySubmissionId] = useState(null);
 
-  const handleOpen = async (weeklySubmissionId) => {
-    setId(weeklySubmissionId);
-    setOpen(true);
-  };
-
-  const handleReject = async (e) => {
-    e.preventDefault();
-    await rejectTimesheet(id, reason);
-    setReason("");
-    setOpen(false);
+  const handleReject = async () => {
+    if (weeklySubmissionId === null) {
+      console.error("No submission ID available");
+      return;
+    }
+    console.log(`Rejecting submission ID: ${weeklySubmissionId}`);
+    console.log(`Reason for rejection: ${reason}`);
+    await rejectTimesheet(weeklySubmissionId, reason);
     refetch();
+    setOpen(false);
   };
 
   useEffect(() => {
     if (data && Array.isArray(data)) {
-      console.log("Data in useEffect:", data); // Debugging statement
+      console.log("Data in useEffect:", data);
       setFilteredData(
         data.filter((item) => {
           const employeeId = item.employeeUniqueId?.toLowerCase() || "";
@@ -81,18 +80,22 @@ const Timesheet = () => {
     }
   }, [searchTerm, data]);
 
+  // eslint-disable-next-line no-unused-vars
   const handlePageSizeChange = (e) => {
     setPageSize(Number(e.target.value));
-    setCurrentPage(0); // Reset to first page when changing page size
+    setCurrentPage(0);
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handlePageChange = (page) => {
     if (page >= 0 && page < Math.ceil(filteredData.length / pageSize)) {
       setCurrentPage(page);
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const pages = Math.ceil(filteredData.length / pageSize);
+
   const currentPageData = filteredData.slice(
     currentPage * pageSize,
     currentPage * pageSize + pageSize
@@ -107,7 +110,13 @@ const Timesheet = () => {
           transition={{ duration: 0.3 }}
           className="border-[1px] w-[500px] p-4 z-[999999] h-[300px] flex items-center flex-col gap-6 justify-center absolute left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] bg-gray-100 rounded-lg shadow-md"
         >
-          <form onSubmit={handleReject} className="w-full">
+          <form
+            className="w-full"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleReject();
+            }}
+          >
             <input
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -120,7 +129,7 @@ const Timesheet = () => {
                 onClick={() => setOpen(false)}
                 className="p-2 bg-gray-400 rounded-lg w-full"
               >
-                cancel
+                Cancel
               </button>
               <button
                 type="submit"
@@ -132,7 +141,7 @@ const Timesheet = () => {
           </form>
         </motion.div>
       )}
-      <div className="bg-white p-10 mt-6 rounded-lg shadow-md relative border-[1px]">
+      <div className="bg-white p-5 mt-6 rounded shadow-md relative border-[1px]">
         {isLoading ? (
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
             Loading...
@@ -143,77 +152,100 @@ const Timesheet = () => {
           </div>
         ) : (
           <>
-            <div
-              className="relative max-w-[400px] border-[1px] rounded-lg overflow-hidden"
-              style={{ borderColor: colors.accent }}
-            >
-              <button className="absolute top-1/2 left-2 transform -translate-y-1/2 border-none cursor-pointer rounded-l-lg">
-                <CiSearch />
+            <p className="pt-0 pb-2 px-5 text-gray-400 italic">
+              Search by start and end date
+            </p>
+            <div className="flex">
+              <div
+                className="relative max-w-[180px] border-[1px] rounded-lg overflow-hidden ml-5 mr-5"
+                style={{ borderColor: colors.accent }}
+              >
+                <input
+                  type="text"
+                  className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
+                  placeholder="YYYY-MM-DD"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div
+                className="relative max-w-[180px] border-[1px] rounded-lg overflow-hidden"
+                style={{ borderColor: colors.accent }}
+              >
+                <input
+                  type="text"
+                  className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
+                  placeholder="YYYY-MM-DD"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <button className="cursor-pointer ml-6 bg-slate-500 px-6 text-white">
+                Search
               </button>
-              <input
-                type="text"
-                className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
-                placeholder="Search by name or id"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
             </div>
             <table
-              className="my-auto border-2 border-white bg-[#eee] w-full rounded-lg mt-5 overflow-hidden"
+              className="my-auto border-2 border-white bg-[#eee] w-full rounded mt-5 overflow-hidden "
               style={{ background: colors.globalBackgroundColor }}
             >
               <thead className="border-b-2 border-b-white">
                 <tr>
                   <th
-                    className="border-2 border-white p-2 text-sm"
+                    className="border-2 border-white p-2 text-[12px] font-bold"
                     style={{ color: colors.secondary }}
                   >
-                    Employee Id
+                    Employee ID
                   </th>
                   <th
-                    className="border-2 border-white p-2 text-sm"
+                    className="border-2 border-white p-2 text-[12px] whitespace-nowrap font-bold"
                     style={{ color: colors.secondary }}
                   >
-                    Name
+                    First Name
                   </th>
                   <th
-                    className="border-2 border-white p-2 text-sm"
+                    className="border-2 border-white p-2 text-[12px] whitespace-nowrap font-bold"
                     style={{ color: colors.secondary }}
                   >
-                    Start Date
+                    Last Name
                   </th>
                   <th
-                    className="border-2 border-white p-2 text-sm"
+                    className="border-2 border-white p-2 text-[12px] whitespace-nowrap font-bold"
                     style={{ color: colors.secondary }}
                   >
-                    End Date
+                    TimeSheet ID
                   </th>
                   <th
-                    className="border-2 border-white p-2 text-sm"
+                    className="border-2 border-white p-2 text-[12px] whitespace-nowrap font-bold"
                     style={{ color: colors.secondary }}
                   >
-                    Payment Mode
+                    Week Begin
                   </th>
                   <th
-                    className="border-2 border-white p-2 text-sm"
+                    className="border-2 border-white p-2 text-[12px] whitespace-nowrap font-bold"
+                    style={{ color: colors.secondary }}
+                  >
+                    Week Close
+                  </th>
+                  <th
+                    className="border-2 border-white p-2 text-[12px] whitespace-nowrap font-bold"
                     style={{ color: colors.secondary }}
                   >
                     Default Hours
                   </th>
                   <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    Overtime Hours
-                  </th>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
+                    className="border-2 border-white p-2 text-[12px] whitespace-nowrap font-bold"
                     style={{ color: colors.secondary }}
                   >
                     Total Hours
                   </th>
                   <th
-                    className="border-2 border-white p-2 text-sm"
+                    className="border-2 border-white p-2 text-[12px] font-bold"
+                    style={{ color: colors.secondary }}
+                  >
+                    Overtime
+                  </th>
+                  <th
+                    className="border-2 border-white p-2 text-[12px] font-bold"
                     style={{ color: colors.secondary }}
                   >
                     Approval
@@ -221,99 +253,118 @@ const Timesheet = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentPageData.map((item) => (
-                  <tr
-                    key={item.employeeUniqueId}
-                    className="border-2 border-white"
-                  >
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.employeeUniqueId}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {` ${item.firstName} ${item.lastName}`}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.startDate}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.endDate}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.paymentMode}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.assignedHours}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.overTimeWorkingHours}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.totalWorkingHours}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm flex gap-2">
-                      <button
-                        className="p-1 bg-green-500 rounded-lg text-white text-xs"
-                        onClick={() => handleApprove(item.weeklySubmissionId)}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        className="p-1 bg-red-500 rounded-lg text-white text-xs"
-                        onClick={() => handleOpen(item.weeklySubmissionId)}
-                      >
-                        Reject
-                      </button>
+                {currentPageData.length > 0 ? (
+                  currentPageData.flatMap((item) =>
+                    item.timeSheetList && item.timeSheetList.length > 0
+                      ? item.timeSheetList.map((timeSheet) => (
+                          <tr
+                            key={`${item.employeeUniqueId}-${timeSheet.timeSheetId}`}
+                            className="border-2 border-white"
+                          >
+                            <td className="border-2 border-white p-2 text-sm">
+                              {item.employeeUniqueId}
+                            </td>
+                            <td className="border-2 border-white p-2 text-sm">
+                              {item.firstName}
+                            </td>
+                            <td className="border-2 border-white p-2 text-sm">
+                              {item.lastName}
+                            </td>
+                            <td className="border-2 border-white p-2 text-sm">
+                              {timeSheet.timeSheetId}
+                            </td>
+                            <td className="border-2 border-white p-2 text-[12px]">
+                              {timeSheet.fromDate}
+                            </td>
+                            <td className="border-2 border-white p-2 text-[12px]">
+                              {timeSheet.toDate}
+                            </td>
+                            <td className="border-2 border-white p-2 text-sm">
+                              {timeSheet.assignedDefaultHours}
+                            </td>
+                            <td className="border-2 border-white p-2 text-sm">
+                              {timeSheet.totalWorkedHours}
+                            </td>
+                            <td className="border-2 border-white p-2 text-sm">
+                              {timeSheet.overTimeWorkedHours}
+                            </td>
+                            <td className=" p-4 text-sm flex justify-center items-center">
+                              {timeSheet.status === "APPROVED" && (
+                                <span className="font-medium">APPROVED</span>
+                              )}
+                              {timeSheet.status === "REJECTED" && (
+                                <span className="font-medium">REJECTED</span>
+                              )}
+                              {timeSheet.status === "PENDING" && (
+                                <>
+                                  <button
+                                    className=" text-green-500 rounded text-sm underline"
+                                    onClick={() =>
+                                      handleApprove(timeSheet.timeSheetId)
+                                    }
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    className="text-red-600 ml-2 underline"
+                                    onClick={() => {
+                                      setWeeklySubmissionId(
+                                        timeSheet.timeSheetId
+                                      );
+                                      setOpen(true);
+                                    }}
+                                  >
+                                    Reject
+                                  </button>
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      : null
+                  )
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="11"
+                      className="border-2 border-white p-2 text-sm text-center"
+                    >
+                      No timesheet data available.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
-            <div className="flex justify-between items-center mt-4">
-              <div>
-                <label htmlFor="pageSize">Page Size:</label>
-                <select
-                  id="pageSize"
-                  value={pageSize}
-                  onChange={handlePageSizeChange}
-                  className="ml-2 border border-gray-300 rounded"
-                >
-                  {[2, 5, 10].map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 0}
-                  className="p-1 bg-gray-200 rounded"
-                >
-                  Prev
-                </button>
-                {Array.from({ length: pages }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handlePageChange(i)}
-                    className={`p-1 ${
-                      currentPage === i
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200"
-                    } rounded`}
-                  >
-                    {i + 1}
-                  </button>
+            {/* <div className="flex justify-between mt-4">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 0}
+                className="bg-blue-500 text-white p-2 rounded-lg"
+              >
+                Previous
+              </button>
+              <span className="mx-4">
+                Page {currentPage + 1} of {pages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= pages - 1}
+                className="bg-blue-500 text-white p-2 rounded-lg"
+              >
+                Next
+              </button>
+              <select
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                className="ml-4 p-2 rounded-lg"
+              >
+                {[2, 5, 10, 20].map((size) => (
+                  <option key={size} value={size}>
+                    {size} per page
+                  </option>
                 ))}
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === pages - 1}
-                  className="p-1 bg-gray-200 rounded"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+              </select>
+            </div> */}
           </>
         )}
       </div>
