@@ -42,16 +42,20 @@ const AddHours = () => {
 
   useEffect(() => {
     getAllEmployeesData();
-  }, []);
+  }, [ID]);
 
   const handleSelect = (e) => {
-    e.preventDefault();
+    setSelectedItem(e.target.value);
     setOpen(false);
     setOpenR(true);
   };
 
   return (
-    <div className="w-full p-5 relative min-h-screen">
+    <div
+      className={`w-full p-5 relative min-h-screen ${
+        open ? "flex  mt-[200px] justify-center" : ""
+      }`}
+    >
       <div>
         {loading ? (
           <p>Loading</p>
@@ -66,7 +70,9 @@ const AddHours = () => {
           />
         ) : null}
       </div>
-      {openr && <AssignedEmployeeCard selectedItem={selectedItem} />}
+      {openr && selectedItem && (
+        <AssignedEmployeeCard selectedItem={selectedItem} />
+      )}
     </div>
   );
 };
@@ -81,7 +87,7 @@ const AddEmployeeCard = ({ data, handleSelect, setSelectedItem, openr }) => {
       <div className="flex items-center mt-5">
         <form className="font-semibold flex gap-5 items-center">
           <select
-            onChange={(e) => setSelectedItem(e.target.value)}
+            onChange={handleSelect}
             className="select select-bordered w-[400px] max-w-xs"
           >
             <option disabled selected>
@@ -95,16 +101,6 @@ const AddEmployeeCard = ({ data, handleSelect, setSelectedItem, openr }) => {
               >{`${val.firstName} ${val.lastName}`}</option>
             ))}
           </select>
-          {!openr && (
-            <button
-              type="submit"
-              className="p-4 px-5 text-white rounded-lg text-xs"
-              style={{ background: colors.primary }}
-              onClick={handleSelect}
-            >
-              SELECT
-            </button>
-          )}
         </form>
       </div>
     </div>
