@@ -4,53 +4,79 @@ import { BiBell } from "react-icons/bi";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/auth-context";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
   const [isOpen, setIsOpen] = useState(false);
+
   const dropdownRef = useRef(null);
+
   const navigate = useNavigate();
-  const { ID }  = useAuth();
+
+  const { ID, role } = useAuth();
+
   const base_url = "http://localhost:8080/api/payrollManager";
 
+  // eslint-disable-next-line no-unused-vars
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const response = await axios.get(
-          `${base_url}/getNotificationsByUniqueId?uniqueId=${ID}`
-        );
-        const unreadNotifications = response.data.filter(
-          (notification) => !notification.read
-        );
-        setNotifications(unreadNotifications);
-        setUnreadCount(unreadNotifications.length);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-      }
-    };
-
-    fetchNotifications();
-  }, [ID]);
-
-  const handleNotificationClick = async (notification) => {
+  const fetchNotifications = async () => {
     try {
-      await axios.put(
-        `${base_url}/readNotificationsByEmployee?uniqueId=${ID}&message=${encodeURIComponent(
-          notification.message
-        )}`
+      const response = await axios.get(
+        `${base_url}/getNotificationsByUniqueId?uniqueId=${ID}`
       );
-      const updatedNotifications = notifications.filter(
-        (n) => n.message !== notification.message
+      const unreadNotifications = response.data.filter(
+        (notification) => !notification.read
       );
-      setNotifications(updatedNotifications);
-      setUnreadCount(updatedNotifications.length);
-
-      setIsOpen(false);
-      navigate(`/timesheet/${notification.notificationId}`);
+      setNotifications(unreadNotifications);
+      setUnreadCount(unreadNotifications.length);
     } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  const updateNotificationStatus = async ({ ID, message }) => {
+    await axios.put(
+      `${base_url}/readNotificationsByEmployee?uniqueId=${ID}&message=${encodeURIComponent(
+        message
+      )}`
+    );
+  };
+
+  const { refetch } = useQuery({
+    queryKey: ["notifications", ID],
+    queryFn: () => fetchNotifications(ID),
+    onError: (error) => {
+      console.error("Error fetching notifications:", error);
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: (notification) =>
+      updateNotificationStatus({ ID, message: notification.message }),
+    onSuccess: () => {
+      refetch();
+    },
+    onError: (error) => {
       console.error("Error updating notification status:", error);
+    },
+  });
+
+  /* For notified data */
+  const handleNotificationClick = (notification) => {
+    try {
+      mutation.mutate(notification);
+      setIsOpen(false);
+      if (role === "Manager") {
+        navigate(`/timesheet`);
+      } else if (role === "Employee") {
+        navigate(`/worksheet`);
+      }
+    } catch (error) {
+      console.error("Error handling notification click:", error);
     }
   };
 

@@ -1,5 +1,4 @@
-// src/TimesheetTable.js
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -18,12 +17,14 @@ const TimesheetTable = () => {
 
   const [timesheet, setTimesheet] = useState({});
   const [dates, setDates] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [endDay, setEndDay] = useState(dayjs(endDate));
 
   useEffect(() => {
     if (startDate && endDate) {
       const start = dayjs(startDate);
       const end = dayjs(endDate);
+      // eslint-disable-next-line no-unused-vars
       const nextTwoDays = [
         end.add(1, "day").format("YYYY-MM-DD"),
         end.add(2, "day").format("YYYY-MM-DD"),
@@ -40,9 +41,6 @@ const TimesheetTable = () => {
         generatedDates.push(date.format("YYYY-MM-DD"));
         newTimesheet[date.format("YYYY-MM-DD")] = "";
       }
-
-      generatedDates.push(...nextTwoDays);
-      nextTwoDays.forEach((date) => (newTimesheet[date] = ""));
 
       setDates(generatedDates);
       setTimesheet(newTimesheet);
@@ -88,21 +86,22 @@ const TimesheetTable = () => {
 
       if (response.ok) {
         const data = await response.json();
-        toast.success("Timesheet submitted successfully!"); // Show success message
-        navigate("/worksheet"); // Navigate to the "Worksheet" page
+        console.log(data);
+        toast.success("Timesheet submitted successfully!");
+        navigate("/worksheet");
       } else {
         throw new Error("Network response was not ok.");
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Failed to submit timesheet. Please try again."); // Show error message
+      toast.error("Failed to submit timesheet. Please try again.");
     }
   };
 
   const handleReset = () => {
     const newTimesheet = {};
     dates.forEach((date) => (newTimesheet[date] = ""));
-    setTimesheet(newTimesheet); // Reset the form to initial state
+    setTimesheet(newTimesheet);
   };
 
   const totalHours = Object.values(timesheet).reduce(
@@ -121,36 +120,36 @@ const TimesheetTable = () => {
   };
 
   return (
-    <div className="max-w-full mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-gray-50">
-      <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">
-        Timesheet for {timesheetId}
+    <div className="p-4 m-10 border border-gray-300 shadow-md bg-gray-50">
+      <h1 className="text-2xl text-center mb-6 text-gray-800">
+        # {timesheetId}
       </h1>
       <form onSubmit={handleSubmit}>
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse">
+        <div className="overflow-hidden">
+          <table className="border-collapse">
             <thead>
               <tr>
-                <th className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-left">
+                <th className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-sm text-left font-light whitespace-nowrap">
                   Timesheet ID
                 </th>
-                <th className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-left">
+                <th className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-left text-sm font-light whitespace-nowrap">
                   Date
                 </th>
                 {dates.map((date) => (
                   <th
                     key={date}
-                    className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-center"
+                    className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-left font-light whitespace-nowrap"
                   >
                     {dayjs(date).format("YYYY-MM-DD")}
                   </th>
                 ))}
-                <th className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-center">
+                <th className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-left font-light whitespace-nowrap">
                   Total Hours
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr>
+              <tr className=" whitespace-nowrap">
                 <td className="border border-gray-300 px-4 py-2 bg-gray-200 text-left">
                   {timesheetId}
                 </td>
@@ -160,7 +159,6 @@ const TimesheetTable = () => {
                 {dates.map((date) => (
                   <td key={date} className="border border-gray-300 px-4 py-2">
                     <input
-                      type="number"
                       name={date}
                       value={formatHours(timesheet[date])}
                       onChange={handleChange}
@@ -183,13 +181,13 @@ const TimesheetTable = () => {
           <button
             type="button"
             onClick={handleReset}
-            className="py-2 px-4 bg-gray-500 text-white font-semibold rounded-md hover:bg-red-600"
+            className="py-2 px-4 bg-gray-500 text-white  hover:bg-red-600"
           >
             Reset
           </button>
           <button
             type="submit"
-            className="py-2 px-4 bg-gray-500 text-white font-semibold rounded-md hover:bg-green-600"
+            className="py-2 px-4 bg-gray-500 text-white  hover:bg-green-600"
           >
             Submit
           </button>

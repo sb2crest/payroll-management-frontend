@@ -39,6 +39,7 @@ export const addConsigneeData = async (
     console.error("Error in saving data: " + error);
   }
 };
+
 export const getAllEmployees = async () => {
   const response = await axios.get(
     `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG7745484B8E`
@@ -46,6 +47,7 @@ export const getAllEmployees = async () => {
   console.log("data--" + response.data);
   return response.data;
 };
+
 export const getAllEmployeeData = async (employeeId) => {
   const response = await axios.get(
     `http://localhost:8080/api/payrollEmployee/findEmployeeByEmployeeId?employeeUniqueId=${employeeId}`
@@ -53,8 +55,9 @@ export const getAllEmployeeData = async (employeeId) => {
   console.log("data" + response.data);
   return response.data;
 };
+
 export const handleReject = async (id, reason) => {
-  // console.log(weeklySubmissionId);
+  console.log("Rejecting:", id);
   const response = await axios.post(
     `http://localhost:8080/api/payrollManager/report-approval`,
     {
@@ -66,13 +69,14 @@ export const handleReject = async (id, reason) => {
   console.log("data" + response.data);
   return response.data;
 };
+
 export const handleApproved = async (weeklySubmissionId) => {
   console.log(weeklySubmissionId);
   const response = await axios.post(
     `http://localhost:8080/api/payrollManager/report-approval`,
     {
       weeklySubmissionId: weeklySubmissionId,
-      message: "Report Approvedddd",
+      message: "Report Approved",
       reportStatus: "APPROVED",
     }
   );
@@ -110,6 +114,7 @@ export const updateEmployeeData = async (
   console.log("data" + response.data);
   return response.data;
 };
+
 export const createHours = async (
   ID,
   firstName,
@@ -122,11 +127,11 @@ export const createHours = async (
   const response = await axios.post(
     `http://localhost:8080/api/payrollManager/weekly-report`,
     {
-      managerUniqueId: 'MG7745484B8E',
-      firstName: 'Nike',
-      lastName: 'Json',
-      startDate: '2024-07-08',
-      endDate:'2024-07-15',
+      managerUniqueId: "MG7745484B8E",
+      firstName: "Nike",
+      lastName: "Json",
+      startDate: "2024-07-08",
+      endDate: "2024-07-15",
       defaultWorkingHours: 40.0,
     }
   );
