@@ -4,10 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useTheme } from "../context/theme-context";
 import { motion } from "framer-motion";
-import {
-  handleApproved,
-  handleReject as rejectTimesheet,
-} from "../helpers/theme-api";
+import { handleReject as rejectTimesheet } from "../helpers/theme-api";
 import { useAuth } from "../context/auth-context";
 
 const fetchTimeSheetData = async (id) => {

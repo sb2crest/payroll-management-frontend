@@ -34,26 +34,33 @@ export const addConsigneeData = async (
   console.log("Request Body:", requestBody);
   try {
     const response = await axios.post("/data-details/addData", requestBody);
-    console.log(response.data);
+    return response.data;
   } catch (error) {
     console.error("Error in saving data: " + error);
   }
 };
 
-export const getAllEmployees = async () => {
-  const response = await axios.get(
-    `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG9FE9B7F20B`
-  );
-  console.log("data--" + response.data);
-  return response.data;
-};
-export const getAllEmployeeData = async (employeeId) => {
+// get employess by id
+export const getEmployeeData = async (employeeId) => {
   const response = await axios.get(
     `http://localhost:8080/api/payrollEmployee/findEmployeeByEmployeeId?employeeUniqueId=${employeeId}`
   );
-  console.log("data" + response.data);
+
   return response.data;
 };
+
+// get all employess
+export const getAllEmployees = async (id) => {
+  try {
+    const res = await axios.get(
+      `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG9FE9B7F20B`
+    );
+    return res.data;
+  } catch (error) {
+    return error;
+  }
+};
+
 export const handleReject = async (id, reason) => {
   // console.log(weeklySubmissionId);
   const response = await axios.post(
@@ -64,11 +71,10 @@ export const handleReject = async (id, reason) => {
       reportStatus: "REJECTED",
     }
   );
-  console.log("data" + response.data);
+
   return response.data;
 };
 export const handleApproved = async (weeklySubmissionId) => {
-  console.log(weeklySubmissionId);
   const response = await axios.post(
     `http://localhost:8080/api/payrollManager/report-approval`,
     {
@@ -77,7 +83,7 @@ export const handleApproved = async (weeklySubmissionId) => {
       reportStatus: "APPROVED",
     }
   );
-  console.log("data" + response.data);
+
   return response.data;
 };
 
@@ -87,38 +93,32 @@ export const updateEmployeeData = async (
   endDate,
   assignedDefaultHours,
   totalWeeklyWorkedHours,
-  totalOvertimeWorkedHours
+  totalOvertimeWorkedHours,
+  reportStatus
 ) => {
-  console.log(
-    weeklySubmissionId,
-    startDate,
-    endDate,
-    assignedDefaultHours,
-    totalWeeklyWorkedHours,
-    totalOvertimeWorkedHours
-  );
   const response = await axios.put(
-    `http://localhost:8080/api/payrollManager/updateWeeklyWorkedHours`,
+    `http://localhost:8080/api/payrollManager/editWeeklyReportWithReportId`,
     {
-      weeklySubmissionId: weeklySubmissionId,
-      startDate: startDate,
-      endDate: endDate,
-      assignedDefaultHours: assignedDefaultHours,
-      totalWeeklyWorkedHours: assignedDefaultHours + totalOvertimeWorkedHours,
-      totalOvertimeWorkedHours: totalOvertimeWorkedHours,
+      weeklySubmissionId,
+      startDate,
+      endDate,
+      assignedDefaultHours,
+      totalWeeklyWorkedHours,
+      totalOvertimeWorkedHours,
+      reportStatus,
     }
   );
-  console.log("data" + response.data);
+
   return response.data;
 };
-export const createHours = async (
+export const createTimeSheetData = async (
   firstName,
   lastName,
   startDate,
   endDate,
   defaultWorkingHours
 ) => {
-  console.log("comming");
+  console.log("comming here two");
   const response = await axios.post(
     `http://localhost:8080/api/payrollManager/weekly-report`,
     {
@@ -130,6 +130,17 @@ export const createHours = async (
       defaultWorkingHours: defaultWorkingHours,
     }
   );
-  console.log("data" + response.data);
+
   return response.data;
+};
+
+export const deleteTimeSheet = async (timeSheetId) => {
+  try {
+    const response = await axios.delete(
+      `http://localhost:8080/api/payrollManager/deleteWeeklyReport/${timeSheetId}`
+    );
+    return response.data;
+  } catch (error) {
+    error;
+  }
 };
