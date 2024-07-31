@@ -10,7 +10,6 @@ import { IoIosArrowForward } from "react-icons/io";
 import { IoPeopleSharp } from "react-icons/io5";
 import { useTheme } from "../context/theme-context";
 import { useAuth } from "../context/auth-context";
-import { MdOutlineAccessTimeFilled } from "react-icons/md";
 
 function Sidebar() {
   const [open, setOpen] = useState(true);
@@ -58,11 +57,7 @@ function Sidebar() {
       text: "Add Hours",
       path: "/add-hours",
     },
-    {
-      icon: MdOutlineAccessTimeFilled,
-      text: "Update Hour",
-      path: "/update-hours",
-    },
+
     {
       icon: IoPerson,
       text: "Profile",
@@ -76,8 +71,8 @@ function Sidebar() {
     },
   ];
 
-  const sidebarItems = 
-  role === "Manager" ? sidebarLinkItemsForManger : sidebarLinkItems;
+  const sidebarItems =
+    role === "Manager" ? sidebarLinkItemsForManger : sidebarLinkItems;
 
   return (
     <motion.div
