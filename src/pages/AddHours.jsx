@@ -14,6 +14,7 @@ import { GoPlus } from "react-icons/go";
 import { useAuth } from "../context/auth-context";
 
 const AddHours = () => {
+  const { colors } = useTheme();
   const { ID } = useAuth();
 
   const [open, setOpen] = useState(true);
@@ -58,7 +59,10 @@ const AddHours = () => {
     >
       <div>
         {loading ? (
-          <p>Loading</p>
+          <span
+            className="loading loading-spinner"
+            style={{ color: colors.primary }}
+          ></span>
         ) : error ? (
           <p>{errorMsg}</p>
         ) : data.length !== 0 ? (

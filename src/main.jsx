@@ -1,24 +1,27 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import ReactDOM from "react-dom/client";
+import { Suspense, lazy } from "react";
 import "./index.css";
 import Layout from "./layouts/Layout.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Inbox from "./pages/Inbox.jsx";
-import Settings from "./pages/Settings.jsx";
-import Profile from "./pages/Profile.jsx";
-import Timesheet from "./pages/Timesheet.jsx";
-import AddConsignee from "./pages/AddConsignee.jsx";
-import AddHours from "./pages/AddHours.jsx";
-import Worksheet from "./pages/Worksheet.jsx";
-import Login from "./pages/Login.jsx";
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./context/theme-context.jsx";
 import axios from "axios";
-
-import Table from "./pages/Table.jsx";
 import { AuthProvider } from "./context/auth-context.jsx";
 import MainDashboard from "./components/MainDashboard.jsx";
+import Loading from "./components/Loading.jsx";
+
+// Lazy load pages
+const Inbox = lazy(() => import("./pages/Inbox.jsx"));
+const Settings = lazy(() => import("./pages/Settings.jsx"));
+const Profile = lazy(() => import("./pages/Profile.jsx"));
+const Timesheet = lazy(() => import("./pages/Timesheet.jsx"));
+const AddConsignee = lazy(() => import("./pages/AddConsignee.jsx"));
+const AddHours = lazy(() => import("./pages/AddHours.jsx"));
+const Worksheet = lazy(() => import("./pages/Worksheet.jsx"));
+const Login = lazy(() => import("./pages/Login.jsx"));
+const Table = lazy(() => import("./pages/Table.jsx"));
 
 axios.defaults.baseURL = "http://localhost:8080/api";
 axios.defaults.withCredentials = true;
@@ -34,49 +37,83 @@ const router = createBrowserRouter([
       },
       {
         path: "/settings",
-        element: <Settings />,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <Settings />
+          </Suspense>
+        ),
       },
       {
         path: "/profile",
-        element: <Profile />,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <Profile />
+          </Suspense>
+        ),
       },
       {
         path: "/inbox",
-        element: <Inbox />,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <Inbox />
+          </Suspense>
+        ),
       },
       {
         path: "/timesheet",
-        element: <Timesheet />,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <Timesheet />
+          </Suspense>
+        ),
       },
       {
         path: "/worksheet",
-        element: <Worksheet />,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <Worksheet />
+          </Suspense>
+        ),
       },
       {
         path: "/add-consignee",
-        element: <AddConsignee />,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <AddConsignee />
+          </Suspense>
+        ),
       },
       {
         path: "/add-hours",
-        element: <AddHours />,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <AddHours />
+          </Suspense>
+        ),
       },
-
       {
         path: "/table",
-        element: <Table />,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <Table />
+          </Suspense>
+        ),
       },
     ],
   },
   {
     path: "/login/:companyID",
-    element: <Login />,
+    element: (
+      <Suspense fallback={<Loading />}>
+        <Login />
+      </Suspense>
+    ),
   },
 ]);
 
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  // eslint-disable-next-line react/jsx-no-undef
   <AuthProvider>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>

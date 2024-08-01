@@ -6,19 +6,22 @@ import { useAuth } from "../context/auth-context";
 import { useEffect } from "react";
 
 function Layout() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       navigate("/login/1");
     }
-  }, []);
-
+  }, [loading, isAuthenticated]);
   const { theme } = useTheme();
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="flex w-full ">
+    <div className="flex w-full">
       <div>
         <Sidebar />
       </div>
