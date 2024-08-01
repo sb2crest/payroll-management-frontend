@@ -15,7 +15,7 @@ import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./context/theme-context.jsx";
 import axios from "axios";
-import UpdateHours from "./pages/UpdateHours.jsx";
+
 import Table from "./pages/Table.jsx";
 import { AuthProvider } from "./context/auth-context.jsx";
 import MainDashboard from "./components/MainDashboard.jsx";
@@ -60,10 +60,7 @@ const router = createBrowserRouter([
         path: "/add-hours",
         element: <AddHours />,
       },
-      {
-        path: "/update-hours",
-        element: <UpdateHours />,
-      },
+
       {
         path: "/table",
         element: <Table />,
