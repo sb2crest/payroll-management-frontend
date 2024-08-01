@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [ID, setID] = useState("");
   const [name, setName] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true); // Add loading state
 
   const authenticateRole = async (ID, password) => {
     try {
@@ -20,12 +21,15 @@ export const AuthProvider = ({ children }) => {
       );
       console.log("Response for authenticating the role:", response);
       const data = response.data;
-    
+
       if (data) {
         setRole(data.role);
         setID(data.id);
         setName(data.fullName);
         setIsAuthenticated(true);
+        localStorage.setItem("ID", data.id);
+        localStorage.setItem("Role", data.role);
+        localStorage.setItem("Name", data.fullName);
       }
       return data;
     } catch (e) {
@@ -35,20 +39,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (ID) {
-      localStorage.setItem("ID:", ID);
+    const storedID = localStorage.getItem("ID");
+    const storedRole = localStorage.getItem("Role");
+    const storedName = localStorage.getItem("Name");
+
+    if (storedID && storedRole && storedName) {
+      setID(storedID);
+      setRole(storedRole);
+      setName(storedName);
+      setIsAuthenticated(true);
     }
-  }, [ID]);
-  useEffect(() => {
-    if (role) {
-      localStorage.setItem("Role:", role);
-    }
-  }, [role]);
-  useEffect(() => {
-    if (name) {
-      localStorage.setItem("Name:", name);
-    }
-  }, [name]);
+    setLoading(false);
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -58,6 +60,7 @@ export const AuthProvider = ({ children }) => {
         name,
         authenticateRole,
         isAuthenticated,
+        loading,
       }}
     >
       {children}
