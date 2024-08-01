@@ -9,21 +9,71 @@ import {
 } from "../helpers/theme-api";
 import { useAuth } from "../context/auth-context";
 
-const fetchTimeSheetData = async (id) => {
-  try {
-    const res = await axios.get(
-      `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=${id}`
-    );
-    console.log("Fetched Data:", res.data);
-    return res.data;
-  } catch (error) {
-    console.error("Failed to fetch data", error);
-    throw new Error("Failed to fetch data");
-  }
-};
-
 const Timesheet = () => {
   const { ID } = useAuth();
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  useEffect(() => {
+    const today = new Date();
+
+    const start = new Date();
+
+    start.setDate(today.getDate() - 30);
+
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    setStartDate(formatDate(start));
+    setEndDate(formatDate(today));
+
+    console.log("Date:", startDate + " to " + endDate);
+  }, [startDate, endDate]);
+
+  const fetchTimeSheetData = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/payrollEmployee/filterData?startDate=${startDate}&endDate=${endDate}&managerUniqueId=MG7745484B8E`
+      );
+      console.log("Fetched Data:", res.data);
+      return res.data;
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      throw new Error("Failed to fetch data");
+    }
+  };
+
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [filtered, setFiltered] = useState(false);
+  const [filteredDataWithDate, setFilteredDataWithDate] = useState([]);
+
+  const handleSearchButtonClick = (e) => {
+    e.preventDefault();
+    searchWithDate();
+  };
+
+  const searchWithDate = async () => {
+    console.log("From: " + fromDate);
+    console.log("To: " + toDate);
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/payrollEmployee/filterData?startDate=2024-06-01&endDate=2024-06-15&managerUniqueId=MG7745484B8E`
+      );
+      const data = res.data;
+      setFilteredDataWithDate(data);
+      setFiltered(true);
+      console.log("Filtered Data:", data);
+      return data;
+    } catch (error) {
+      console.error("Failed to search with date", error);
+    }
+  };
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["timeSheetData", ID],
@@ -164,8 +214,8 @@ const Timesheet = () => {
                   type="text"
                   className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
                   placeholder="YYYY-MM-DD"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
                 />
               </div>
               <div
@@ -176,11 +226,14 @@ const Timesheet = () => {
                   type="text"
                   className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
                   placeholder="YYYY-MM-DD"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
                 />
               </div>
-              <button className="cursor-pointer ml-6 bg-slate-500 px-6 text-white">
+              <button
+                className="cursor-pointer ml-6 bg-slate-500 px-6 text-white"
+                onClick={handleSearchButtonClick}
+              >
                 Search
               </button>
             </div>
@@ -252,88 +305,179 @@ const Timesheet = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody>
-                {currentPageData.length > 0 ? (
-                  currentPageData.flatMap((item) =>
-                    item.timeSheetList && item.timeSheetList.length > 0
-                      ? item.timeSheetList.map((timeSheet) => (
-                          <tr
-                            key={`${item.employeeUniqueId}-${timeSheet.timeSheetId}`}
-                            className="border-2 border-white"
-                          >
-                            <td className="border-2 border-white p-2 text-sm">
-                              {item.employeeUniqueId}
-                            </td>
-                            <td className="border-2 border-white p-2 text-sm">
-                              {item.firstName}
-                            </td>
-                            <td className="border-2 border-white p-2 text-sm">
-                              {item.lastName}
-                            </td>
-                            <td className="border-2 border-white p-2 text-sm">
-                              {timeSheet.timeSheetId}
-                            </td>
-                            <td className="border-2 border-white p-2 text-[12px]">
-                              {timeSheet.fromDate}
-                            </td>
-                            <td className="border-2 border-white p-2 text-[12px]">
-                              {timeSheet.toDate}
-                            </td>
-                            <td className="border-2 border-white p-2 text-sm">
-                              {timeSheet.assignedDefaultHours}
-                            </td>
-                            <td className="border-2 border-white p-2 text-sm">
-                              {timeSheet.totalWorkedHours}
-                            </td>
-                            <td className="border-2 border-white p-2 text-sm">
-                              {timeSheet.overTimeWorkedHours}
-                            </td>
-                            <td className=" p-4 text-sm flex justify-center items-center">
-                              {timeSheet.status === "APPROVED" && (
-                                <span className="font-medium">APPROVED</span>
-                              )}
-                              {timeSheet.status === "REJECTED" && (
-                                <span className="font-medium">REJECTED</span>
-                              )}
-                              {timeSheet.status === "PENDING" && (
-                                <>
-                                  <button
-                                    className=" text-green-500 rounded text-sm underline"
-                                    onClick={() =>
-                                      handleApprove(timeSheet.timeSheetId)
-                                    }
-                                  >
-                                    Approve
-                                  </button>
-                                  <button
-                                    className="text-red-600 ml-2 underline"
-                                    onClick={() => {
-                                      setWeeklySubmissionId(
-                                        timeSheet.timeSheetId
-                                      );
-                                      setOpen(true);
-                                    }}
-                                  >
-                                    Reject
-                                  </button>
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                        ))
-                      : null
-                  )
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="11"
-                      className="border-2 border-white p-2 text-sm text-center"
-                    >
-                      No timesheet data available.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
+              {filtered ? (
+                <tbody>
+                  {filteredDataWithDate.length > 0 ? (
+                    filteredDataWithDate.flatMap((item) =>
+                      item.timeSheetList && item.timeSheetList.length > 0
+                        ? item.timeSheetList.map((timeSheet) => (
+                            <tr
+                              key={`${item.employeeUniqueId}-${timeSheet.timeSheetId}`}
+                              className="border-2 border-white"
+                            >
+                              <td className="border-2 border-white p-2 text-sm">
+                                {item.employeeUniqueId}
+                              </td>
+                              <td className="border-2 border-white p-2 text-sm">
+                                {item.firstName}
+                              </td>
+                              <td className="border-2 border-white p-2 text-sm">
+                                {item.lastName}
+                              </td>
+                              <td className="border-2 border-white p-2 text-sm">
+                                {timeSheet.timeSheetId}
+                              </td>
+                              <td className="border-2 border-white p-2 text-[12px]">
+                                {timeSheet.fromDate}
+                              </td>
+                              <td className="border-2 border-white p-2 text-[12px]">
+                                {timeSheet.toDate}
+                              </td>
+                              <td className="border-2 border-white p-2 text-sm">
+                                {timeSheet.assignedDefaultHours}
+                              </td>
+                              <td className="border-2 border-white p-2 text-sm">
+                                {timeSheet.totalWorkedHours}
+                              </td>
+                              <td className="border-2 border-white p-2 text-sm">
+                                {timeSheet.overTimeWorkedHours}
+                              </td>
+                              <td className=" p-4 text-sm flex justify-center items-center">
+                                {timeSheet.status === "APPROVED" && (
+                                  <span className="font-medium">APPROVED</span>
+                                )}
+                                {timeSheet.status === "REJECTED" && (
+                                  <span className="font-medium">REJECTED</span>
+                                )}
+                                {timeSheet.status === "PENDING" && (
+                                  <>
+                                    <button
+                                      className=" text-green-500 rounded text-sm underline"
+                                      onClick={() =>
+                                        handleApprove(timeSheet.timeSheetId)
+                                      }
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      className="text-red-600 ml-2 underline"
+                                      onClick={() => {
+                                        setWeeklySubmissionId(
+                                          timeSheet.timeSheetId
+                                        );
+                                        setOpen(true);
+                                      }}
+                                    >
+                                      Reject
+                                    </button>
+                                  </>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        : null
+                    )
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="11"
+                        className="border-2 border-white p-2 text-sm text-center"
+                      >
+                        No timesheet data available.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              ) : (
+                <>
+                  <tbody>
+                    {currentPageData.length > 0 ? (
+                      currentPageData.flatMap((item) =>
+                        item.timeSheetList && item.timeSheetList.length > 0
+                          ? item.timeSheetList.map((timeSheet) => (
+                              <tr
+                                key={`${item.employeeUniqueId}-${timeSheet.timeSheetId}`}
+                                className="border-2 border-white"
+                              >
+                                <td className="border-2 border-white p-2 text-sm">
+                                  {item.employeeUniqueId}
+                                </td>
+                                <td className="border-2 border-white p-2 text-sm">
+                                  {item.firstName}
+                                </td>
+                                <td className="border-2 border-white p-2 text-sm">
+                                  {item.lastName}
+                                </td>
+                                <td className="border-2 border-white p-2 text-sm">
+                                  {timeSheet.timeSheetId}
+                                </td>
+                                <td className="border-2 border-white p-2 text-[12px]">
+                                  {timeSheet.fromDate}
+                                </td>
+                                <td className="border-2 border-white p-2 text-[12px]">
+                                  {timeSheet.toDate}
+                                </td>
+                                <td className="border-2 border-white p-2 text-sm">
+                                  {timeSheet.assignedDefaultHours}
+                                </td>
+                                <td className="border-2 border-white p-2 text-sm">
+                                  {timeSheet.totalWorkedHours}
+                                </td>
+                                <td className="border-2 border-white p-2 text-sm">
+                                  {timeSheet.overTimeWorkedHours}
+                                </td>
+                                <td className=" p-4 text-sm flex justify-center items-center">
+                                  {timeSheet.status === "APPROVED" && (
+                                    <span className="font-medium">
+                                      APPROVED
+                                    </span>
+                                  )}
+                                  {timeSheet.status === "REJECTED" && (
+                                    <span className="font-medium">
+                                      REJECTED
+                                    </span>
+                                  )}
+                                  {timeSheet.status === "PENDING" && (
+                                    <>
+                                      <button
+                                        className=" text-green-500 rounded text-sm underline"
+                                        onClick={() =>
+                                          handleApprove(timeSheet.timeSheetId)
+                                        }
+                                      >
+                                        Approve
+                                      </button>
+                                      <button
+                                        className="text-red-600 ml-2 underline"
+                                        onClick={() => {
+                                          setWeeklySubmissionId(
+                                            timeSheet.timeSheetId
+                                          );
+                                          setOpen(true);
+                                        }}
+                                      >
+                                        Reject
+                                      </button>
+                                    </>
+                                  )}
+                                </td>
+                              </tr>
+                            ))
+                          : null
+                      )
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan="11"
+                          className="border-2 border-white p-2 text-sm text-center"
+                        >
+                          No timesheet data available.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </>
+              )}
             </table>
             {/* <div className="flex justify-between mt-4">
               <button
