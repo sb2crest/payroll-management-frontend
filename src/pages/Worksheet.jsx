@@ -72,7 +72,7 @@ const Worksheet = () => {
       case "REJECTED":
         return "text-red-500";
       case "DRAFT":
-        return "underline text-dark-blue-500 cursor-pointer";
+        return "underline text-purple-500 cursor-pointer";
       default:
         return "";
     }
