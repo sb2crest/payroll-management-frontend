@@ -40,7 +40,6 @@ export const addConsigneeData = async (
   }
 };
 
-// get employess by id
 export const getEmployeeData = async (employeeId) => {
   const response = await axios.get(
     `http://localhost:8080/api/payrollEmployee/findEmployeeByEmployeeId?employeeUniqueId=${employeeId}`
@@ -49,11 +48,11 @@ export const getEmployeeData = async (employeeId) => {
   return response.data;
 };
 
-// get all employess
 export const getAllEmployees = async (id) => {
+  console.log("manager id:", id);
   try {
     const res = await axios.get(
-      `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=MG9FE9B7F20B`
+      `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=${id}`
     );
     return res.data;
   } catch (error) {
@@ -61,27 +60,19 @@ export const getAllEmployees = async (id) => {
   }
 };
 
-export const handleReject = async (id, reason) => {
-  // console.log(weeklySubmissionId);
+export const handleReject = async (submissions) => {
   const response = await axios.post(
     `http://localhost:8080/api/payrollManager/report-approval`,
-    {
-      weeklySubmissionId: id,
-      message: reason,
-      reportStatus: "REJECTED",
-    }
+    submissions
   );
 
   return response.data;
 };
-export const handleApproved = async (weeklySubmissionId) => {
+
+export const handleApproved = async (submissions) => {
   const response = await axios.post(
     `http://localhost:8080/api/payrollManager/report-approval`,
-    {
-      weeklySubmissionId: weeklySubmissionId,
-      message: "Report Approvedddd",
-      reportStatus: "APPROVED",
-    }
+    submissions
   );
 
   return response.data;
@@ -111,18 +102,20 @@ export const updateEmployeeData = async (
 
   return response.data;
 };
+
 export const createTimeSheetData = async (
   firstName,
   lastName,
   startDate,
   endDate,
-  defaultWorkingHours
+  defaultWorkingHours,
+  ID
 ) => {
   console.log("comming here two");
   const response = await axios.post(
     `http://localhost:8080/api/payrollManager/weekly-report`,
     {
-      managerUniqueId: "MG9FE9B7F20B",
+      managerUniqueId: ID,
       firstName: firstName,
       lastName: lastName,
       startDate: startDate,

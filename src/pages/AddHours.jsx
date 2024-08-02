@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import { useTheme } from "../context/theme-context";
 import toast from "react-hot-toast";
@@ -79,8 +80,12 @@ const AddHours = () => {
 
 export default AddHours;
 
+// eslint-disable-next-line no-unused-vars
 const AddEmployeeCard = ({ data, handleSelect, setSelectedItem, openr }) => {
+  // eslint-disable-next-line no-unused-vars
   const { colors } = useTheme();
+
+  console.log(data);
 
   return (
     <div>
@@ -109,11 +114,7 @@ const AddEmployeeCard = ({ data, handleSelect, setSelectedItem, openr }) => {
 
 const AssignedEmployeeCard = ({ selectedItem }) => {
   const { colors } = useTheme();
-  const [showButton, setShowButton] = useState(true);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [hour, setHour] = useState(0);
-  const [show, setShow] = useState(false);
+
   const [data, setData] = useState(null);
 
   const fetchSelectedEmployeeData = async () => {
@@ -129,6 +130,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
 
   useEffect(() => {
     fetchSelectedEmployeeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItem]);
 
   if (!data) {
@@ -230,6 +232,9 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
 
 const CreateModal = ({ data, fetchSelectedEmployeeData }) => {
   const { colors } = useTheme();
+
+  const { ID } = useAuth();
+
   const formatDate = (date) => {
     return date.toISOString().split("T")[0];
   };
@@ -263,7 +268,8 @@ const CreateModal = ({ data, fetchSelectedEmployeeData }) => {
         data.lastName,
         startDate,
         endDate,
-        totalHours
+        totalHours,
+        ID
       );
 
       if (res) {
@@ -438,11 +444,13 @@ const DeleteCard = ({ timeSheetId, fetchSelectedEmployeeData, data }) => {
 };
 
 const EditCard = ({ data, fetchSelectedEmployeeData }) => {
+  // eslint-disable-next-line no-unused-vars
   const { colors } = useTheme();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [workeHour, setWorkHour] = useState(data.assignedDefaultHours);
   const [startDate, setStartDate] = useState(data.fromDate);
+  // eslint-disable-next-line no-unused-vars
   const [endDate, setEndDate] = useState(data.toDate);
   const isDisable =
     data.status === "PENDING"
