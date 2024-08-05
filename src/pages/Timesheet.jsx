@@ -8,10 +8,30 @@ import {
   handleReject as rejectTimesheet,
 } from "../helpers/theme-api";
 import { useAuth } from "../context/auth-context";
+import { CiSearch } from "react-icons/ci";
 
 const Timesheet = () => {
+  /* destructuring for ID and theme */
   const { ID } = useAuth();
+  const { colors } = useTheme();
 
+  /* sort default data */
+  const [timeSheetData, setTimeSheetData] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [sortOrder, setSortOrder] = useState("asc"); // or "desc"
+
+  const sortData = (data) => {
+    const sortedData = data.sort((a, b) => {
+      const timestampA = new Date(a.submittedTimestamp).getTime();
+      const timestampB = new Date(b.submittedTimestamp).getTime();
+      return sortOrder === "asc"
+        ? timestampA - timestampB
+        : timestampB - timestampA;
+    });
+    setTimeSheetData(sortedData);
+  };
+
+  /* time sheet data */
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -42,23 +62,29 @@ const Timesheet = () => {
       const res = await axios.get(
         `http://localhost:8080/api/payrollEmployee/filterData?startDate=${date1}&endDate=${date2}&managerUniqueId=${ID}`
       );
-      console.log("Fetched Data:", res.data);
-      return res.data;
+      const dataWithTimestamps = res.data.map((item) => ({
+        ...item,
+        submittedTimestamp: item.submittedTimestamp || null,
+      }));
+      setTimeSheetData(dataWithTimestamps);
+      return dataWithTimestamps;
     } catch (error) {
       console.error("Failed to fetch data", error);
       throw new Error("Failed to fetch data");
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["timeSheetData", ID],
+    queryFn: () => fetchTimeSheetData(startDate, endDate),
+  });
+
+  /* search with date */
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [filtered, setFiltered] = useState(false);
   const [filteredDataWithDate, setFilteredDataWithDate] = useState([]);
-
-  const handleSearchButtonClick = (e) => {
-    e.preventDefault();
-    searchWithDate();
-  };
 
   const searchWithDate = async () => {
     console.log("From: " + fromDate);
@@ -77,17 +103,60 @@ const Timesheet = () => {
     }
   };
 
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["timeSheetData", ID],
-    queryFn: () => fetchTimeSheetData(startDate, endDate),
-  });
+  const handleSearchButtonClick = (e) => {
+    e.preventDefault();
+    searchWithDate();
+  };
 
-  // eslint-disable-next-line no-unused-vars
-  const [filteredData, setFilteredData] = useState([]);
+  /* search with id */
+  const [searchWithID, setSearchWithID] = useState("");
+  const [dataFilteredWithID, setDataFilteredWithID] = useState([]);
+  const [filteredDataWithID, setFilteredDataWithID] = useState(false);
 
-  const { colors } = useTheme();
+  const filterWithId = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/payrollEmployee/filterEmployeesByUniqueId?managerUniqueId=${ID}&employeeUniqueId=${searchWithID}`
+      );
+      const data = res.data;
+      setDataFilteredWithID(data);
+      setFilteredDataWithID(true);
+      setFiltered(false);
+    } catch (error) {
+      console.error("Failed to filter with id", error);
+    }
+  };
 
-  const [checkedData, setCheckedData] = useState([]);
+  /* search with name */
+  const [searchWithName, setSearchWithName] = useState("");
+  const [dataFilteredWithName, setDataFilteredWithName] = useState([]);
+  const [filteredDataWithName, setFilteredDataWithName] = useState(false);
+
+  const filterWithName = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/payrollEmployee/filterEmployeesByFullName?managerUniqueId=${ID}&employeeName=${searchWithName}`
+      );
+      const data = res.data;
+      console.log("Filtered data with name:", data);
+      setDataFilteredWithName(data);
+      setFilteredDataWithName(true);
+    } catch (error) {
+      console.error("Failed to filter with name", error);
+    }
+  };
+
+  // Determine which data to render
+  const dataToRender =
+    filteredDataWithDate.length > 0
+      ? filteredDataWithDate
+      : dataFilteredWithID.length > 0
+      ? dataFilteredWithID
+      : dataFilteredWithName.length > 0
+      ? dataFilteredWithName
+      : timeSheetData;
+
+  /* selecting multiple records */
   const [selectedRows, setSelectedRows] = useState([]);
 
   const handleCheckboxChange = (timeSheet) => {
@@ -109,43 +178,15 @@ const Timesheet = () => {
   const isChecked = (timeSheetId) =>
     selectedRows.some((row) => row.timeSheetId === timeSheetId);
 
+  /* rejection form */
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
 
-  // eslint-disable-next-line no-unused-vars
-  const updateStatus = (status) => {
-    console.log("Updating status to:", status);
-    console.log("Selected rows:", selectedRows);
-    console.log("Checked data before update:", checkedData);
-
-    if (!checkedData.length || !selectedRows.length) {
-      console.warn("No data or rows selected to update.");
-      return;
-    }
-
-    const updatedData = checkedData.map((item) => {
-      const updatedTimeSheetList = item.timeSheetList.map((timeSheet) =>
-        selectedRows.some(
-          (selectedRow) => selectedRow.timeSheetId === timeSheet.timeSheetId
-        )
-          ? { ...timeSheet, status } // Update status for selected rows
-          : timeSheet
-      );
-
-      return {
-        ...item,
-        timeSheetList: updatedTimeSheetList,
-      };
-    });
-
-    console.log("Updated data:", updatedData);
-
-    // Update the state with the new data
-    setCheckedData(updatedData);
-    setSelectedRows([]); // Clear selected rows after update
+  const handleRejectionButtonClick = () => {
+    setOpen(true); // Open the form
   };
 
-  /* API Integration for Approval */
+  /* approval */
   const handleApprove = async () => {
     if (!selectedRows.length) {
       console.warn("No rows selected to approve.");
@@ -158,45 +199,26 @@ const Timesheet = () => {
       reportStatus: "APPROVED",
     }));
 
-    console.log("submissions before", submissions);
-
     try {
       const res = await handleApproved(submissions);
-      await refetch();
-      console.log("submissions after", res);
-    } catch (error) {
-      console.error("Error approving timesheets:", error);
-    } finally {
-      setSelectedRows([]);
-    }
-  };
 
-  const handleApproveForFilterData = async () => {
-    if (!selectedRows.length) {
-      console.warn("No rows selected to approve.");
-      return;
-    }
+      if (filteredDataWithID) {
+        filterWithId();
+      }
+      if (filtered) {
+        searchWithDate();
+      }
+      if (filteredDataWithName) {
+        await filterWithName();
+      }
 
-    const submissions = selectedRows.map((row) => ({
-      weeklySubmissionId: row.timeSheetId,
-      message: "Report Approvedddd",
-      reportStatus: "APPROVED",
-    }));
-
-    try {
-      // eslint-disable-next-line no-unused-vars
-      const res = await handleApproved(submissions);
-      setFilteredDataWithDate((prevData) =>
-        prevData.map((item) =>
-          item.timeSheetList.map((timeSheet) =>
-            selectedRows.some(
-              (row) => row.timeSheetId === timeSheet.timeSheetId
-            )
-              ? { ...timeSheet, status: "APPROVED" }
-              : timeSheet
-          )
-        )
-      );
+      // Extract timestamps from the response
+      const updatedData = res.map((response) => ({
+        ...response,
+        submittedTimestamp: response.submittedTimestamp || null,
+      }));
+      setTimeSheetData((prevData) => [...prevData, ...updatedData]);
+      sortData(updatedData);
       await refetch();
     } catch (error) {
       console.error("Error approving timesheets:", error);
@@ -205,6 +227,7 @@ const Timesheet = () => {
     }
   };
 
+  /* rejection */
   const handleRejectionFormSubmit = async () => {
     if (!selectedRows.length) {
       console.warn("No rows selected to reject.");
@@ -218,8 +241,18 @@ const Timesheet = () => {
     }));
 
     try {
-      await rejectTimesheet(submissions);
+      const res = await rejectTimesheet(submissions);
       await refetch();
+      if (filteredDataWithID) {
+        filterWithId();
+      }
+      if (filtered) {
+        searchWithDate();
+      }
+      if (filteredDataWithName) {
+        filteredDataWithName();
+      }
+      console.log("submittedTimestamp:", res.submittedTimestamp);
     } catch (error) {
       console.error("Error rejecting timesheets:", error);
     } finally {
@@ -229,68 +262,16 @@ const Timesheet = () => {
     }
   };
 
-  const handleRejectionFormSubmitForData = async () => {
-    if (!selectedRows.length) {
-      console.warn("No rows selected to reject.");
-      return;
-    }
-
-    const submissions = selectedRows.map((row) => ({
-      weeklySubmissionId: row.timeSheetId,
-      message: reason,
-      reportStatus: "REJECTED",
-    }));
-
-    try {
-      await rejectTimesheet(submissions);
-
-      // Update local state with rejected status
-      setFilteredDataWithDate((prevData) =>
-        prevData.map((item) => ({
-          ...item,
-          timeSheetList: item.timeSheetList.map((timeSheet) =>
-            selectedRows.some(
-              (row) => row.timeSheetId === timeSheet.timeSheetId
-            )
-              ? { ...timeSheet, status: "REJECTED" }
-              : timeSheet
-          ),
-        }))
-      );
-
-      // Refetch data to sync with server
-      await refetch();
-    } catch (error) {
-      console.error("Error rejecting timesheets:", error);
-    } finally {
-      setSelectedRows([]);
-      setOpen(false);
-      setReason("");
-    }
-  };
-
+  /* form submission */
   const submitDefault = async (e) => {
     e.preventDefault();
-    if (filteredData) {
-      await handleRejectionFormSubmitForData();
-    } else {
-      await handleRejectionFormSubmit();
-    }
+    await handleRejectionFormSubmit();
   };
 
-  const approvalHandler = async (e) => {
-    e.preventDefault();
-    if (filteredData) {
-      await handleApprove();
-    } else {
-      await handleApproveForFilterData();
-    }
-  };
+  /* style and functionality for buttons before and after selecting rows */
+  const areButtonsDisabled = selectedRows.length === 0;
 
-  const handleRejectionButtonClick = () => {
-    setOpen(true); // Open the form
-  };
-
+  /* style for table */
   const hexToRgb = (hex) => {
     hex = hex.replace(/^#/, "");
     let bigint = parseInt(hex, 16);
@@ -346,43 +327,78 @@ const Timesheet = () => {
           </div>
         ) : (
           <>
-            <p className="pt-0 pb-2 px-5 text-gray-400 italic">
-              Search by start and end date
-            </p>
             <div className="flex">
-              <div
-                className="relative max-w-[180px] border-[1px] rounded-lg overflow-hidden ml-5 mr-5"
-                style={{ borderColor: colors.accent }}
-              >
+              <div>
+                <p className="pt-0 pb-2 px-5 text-gray-400 text-[14px]">
+                  Search by start and end date
+                </p>
+                <div className="flex">
+                  <div className="relative max-w-[180px] border-[1px] rounded overflow-hidden ml-5 mr-5">
+                    <input
+                      type="text"
+                      className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
+                      placeholder="YYYY-MM-DD"
+                      value={fromDate}
+                      onChange={(e) => setFromDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="relative max-w-[180px] border-[1px] rounded overflow-hidden">
+                    <input
+                      type="text"
+                      className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
+                      placeholder="YYYY-MM-DD"
+                      value={toDate}
+                      onChange={(e) => setToDate(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    className="cursor-pointer ml-6  px-6 text-white"
+                    onClick={handleSearchButtonClick}
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    Search
+                  </button>
+                </div>
+              </div>
+              <div className="border-[1px] rounded overflow-hidden mt-8 ml-5 flex">
                 <input
                   type="text"
-                  className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
-                  placeholder="YYYY-MM-DD"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
+                  className="text-sm outline-none bg-white px-2 py-2"
+                  placeholder="Search by employee ID"
+                  style={{ fontSize: "13px" }}
+                  value={searchWithID}
+                  onChange={(e) => setSearchWithID(e.target.value)}
                 />
+                <button
+                  className="relative right-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    filterWithId();
+                  }}
+                >
+                  <CiSearch />
+                </button>
               </div>
-              <div
-                className="relative max-w-[180px] border-[1px] rounded-lg overflow-hidden"
-                style={{ borderColor: colors.accent }}
-              >
+              <div className="border-[1px] rounded overflow-hidden mt-8 ml-5 flex">
                 <input
                   type="text"
-                  className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
-                  placeholder="YYYY-MM-DD"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
+                  className="text-sm outline-none bg-white py-2 pl-3"
+                  placeholder="Search by name"
+                  style={{ fontSize: "13px" }}
+                  value={searchWithName}
+                  onChange={(e) => setSearchWithName(e.target.value)}
                 />
+                <button
+                  className="relative right-1"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    filterWithName();
+                  }}
+                >
+                  <CiSearch />
+                </button>
               </div>
-              <button
-                className="cursor-pointer ml-6 rounded px-6 text-white"
-                onClick={handleSearchButtonClick}
-                style={{ backgroundColor: colors.primary }}
-              >
-                Search
-              </button>
             </div>
-
             <div style={{ maxHeight: "280px", overflowY: "auto" }}>
               <table className="my-auto w-full rounded mt-5  ">
                 <thead
@@ -397,10 +413,7 @@ const Timesheet = () => {
                       Employee ID
                     </th>
                     <th className="p-2 text-[12px] whitespace-nowrap uppercase">
-                      First Name
-                    </th>
-                    <th className="p-2 text-[12px] whitespace-nowrap uppercase">
-                      Last Name
+                      Employee Name
                     </th>
                     <th className="p-2 text-[12px] whitespace-nowrap uppercase">
                       TimeSheet ID
@@ -425,283 +438,150 @@ const Timesheet = () => {
                     </th>
                   </tr>
                 </thead>
-                {filtered ? (
-                  <tbody>
-                    {filteredDataWithDate.length > 0 ? (
-                      filteredDataWithDate.flatMap((item) =>
-                        item.timeSheetList && item.timeSheetList.length > 0
-                          ? item.timeSheetList.map((timeSheet, index) => (
-                              <tr
-                                key={`${item.employeeUniqueId}-${timeSheet.timeSheetId}`}
-                                style={{
-                                  background:
-                                    index % 2 === 0
-                                      ? ""
-                                      : `rgba(${hexToRgb(
-                                          colors.primary
-                                        )}, 0.1)`,
-                                }}
-                              >
-                                <td className="text-sm">
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked(timeSheet.timeSheetId)}
-                                    onChange={() => {
-                                      if (timeSheet.status === "PENDING") {
-                                        handleCheckboxChange(timeSheet);
-                                      }
-                                    }}
-                                    className="ml-1"
-                                    style={{
-                                      height: "17px",
-                                      width: "17px",
-                                      backgroundColor:
-                                        timeSheet.status === "PENDING"
-                                          ? "initial"
-                                          : "#d3d3d3",
-                                      cursor:
-                                        timeSheet.status === "PENDING"
-                                          ? "pointer"
-                                          : "not-allowed",
-                                    }}
-                                    disabled={timeSheet.status !== "PENDING"}
-                                  />
-                                </td>
-                                <td
-                                  className="p-2 text-sm"
-                                  style={{ textAlign: "center" }}
-                                >
-                                  {item.employeeUniqueId}
-                                </td>
-                                <td
-                                  className="p-2 text-sm"
-                                  style={{ textAlign: "center" }}
-                                >
-                                  {item.firstName}
-                                </td>
-                                <td
-                                  className="p-2 text-sm"
-                                  style={{ textAlign: "center" }}
-                                >
-                                  {item.lastName}
-                                </td>
-                                <td
-                                  className="p-2 text-sm"
-                                  style={{ textAlign: "center" }}
-                                >
-                                  {timeSheet.timeSheetId}
-                                </td>
-                                <td
-                                  className="p-2 text-[12px]"
-                                  style={{ textAlign: "center" }}
-                                >
-                                  {timeSheet.fromDate}
-                                </td>
-                                <td
-                                  className="p-2 text-[12px]"
-                                  style={{ textAlign: "center" }}
-                                >
-                                  {timeSheet.toDate}
-                                </td>
-                                <td
-                                  className="p-2 text-sm"
-                                  style={{ textAlign: "center" }}
-                                >
-                                  {timeSheet.assignedDefaultHours}
-                                </td>
-                                <td
-                                  className="p-2 text-sm"
-                                  style={{ textAlign: "center" }}
-                                >
-                                  {timeSheet.totalWorkedHours}
-                                </td>
-                                <td
-                                  className="p-2 text-sm"
-                                  style={{ textAlign: "center" }}
-                                >
-                                  {timeSheet.overTimeWorkedHours}
-                                </td>
-                                <td className=" p-4 text-sm flex justify-center items-center">
-                                  {timeSheet.status === "APPROVED" && (
-                                    <span className="font-medium text-green-500">
-                                      APPROVED
-                                    </span>
-                                  )}
-                                  {timeSheet.status === "REJECTED" && (
-                                    <span className="font-medium text-red-600">
-                                      REJECTED
-                                    </span>
-                                  )}
-                                  {timeSheet.status === "PENDING" && (
-                                    <>
-                                      <span className="font-medium text-orange-500">
-                                        PENDING
-                                      </span>
-                                    </>
-                                  )}
-                                </td>
-                              </tr>
-                            ))
-                          : null
-                      )
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan="11"
-                          className="border-2 border-white p-2 text-sm text-center"
-                        >
-                          No timesheet data available.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                ) : (
-                  <>
-                    <tbody>
-                      {data.length > 0 ? (
-                        data.flatMap((item) =>
-                          item.timeSheetList && item.timeSheetList.length > 0
-                            ? item.timeSheetList.map((timeSheet) => (
-                                <tr
-                                  key={`${item.employeeUniqueId}-${timeSheet.timeSheetId}`}
-                                  style={{
-                                    background:
-                                      item.timeSheetList.indexOf(timeSheet) %
-                                        2 ===
-                                      0
-                                        ? ""
-                                        : `rgba(${hexToRgb(
-                                            colors.primary
-                                          )}, 0.1)`,
+                <tbody>
+                  {dataToRender.length > 0 ? (
+                    dataToRender.flatMap((item) =>
+                      item.timeSheetList && item.timeSheetList.length > 0
+                        ? item.timeSheetList.map((timeSheet) => (
+                            <tr
+                              key={`${item.employeeUniqueId}-${timeSheet.timeSheetId}`}
+                              style={{
+                                background:
+                                  item.timeSheetList.indexOf(timeSheet) % 2 ===
+                                  0
+                                    ? ""
+                                    : `rgba(${hexToRgb(colors.primary)}, 0.1)`,
+                              }}
+                            >
+                              <td className="text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked(timeSheet.timeSheetId)}
+                                  onChange={() => {
+                                    if (timeSheet.status === "PENDING") {
+                                      handleCheckboxChange(timeSheet);
+                                    }
                                   }}
-                                >
-                                  <td className="text-sm">
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked(timeSheet.timeSheetId)}
-                                      onChange={() => {
-                                        if (timeSheet.status === "PENDING") {
-                                          handleCheckboxChange(timeSheet);
-                                        }
-                                      }}
-                                      className="ml-1"
-                                      style={{
-                                        height: "17px",
-                                        width: "17px",
-                                        backgroundColor:
-                                          timeSheet.status === "PENDING"
-                                            ? "initial"
-                                            : "#d3d3d3",
-                                        cursor:
-                                          timeSheet.status === "PENDING"
-                                            ? "pointer"
-                                            : "not-allowed",
-                                      }}
-                                      disabled={timeSheet.status !== "PENDING"}
-                                    />
-                                  </td>
-                                  <td
-                                    className="p-2 text-sm"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {item.employeeUniqueId}
-                                  </td>
-                                  <td
-                                    className="p-2 text-sm"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {item.firstName}
-                                  </td>
-                                  <td
-                                    className="p-2 text-sm"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {item.lastName}
-                                  </td>
-                                  <td
-                                    className="p-2 text-sm"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {timeSheet.timeSheetId}
-                                  </td>
-                                  <td
-                                    className="p-2 text-[12px]"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {timeSheet.fromDate}
-                                  </td>
-                                  <td
-                                    className="p-2 text-[12px]"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {timeSheet.toDate}
-                                  </td>
-                                  <td
-                                    className="p-2 text-sm"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {timeSheet.assignedDefaultHours}
-                                  </td>
-                                  <td
-                                    className="p-2 text-sm"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {timeSheet.totalWorkedHours}
-                                  </td>
-                                  <td
-                                    className="p-2 text-sm"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {timeSheet.overTimeWorkedHours}
-                                  </td>
-                                  <td
-                                    className="p-4 text-sm flex justify-center items-center"
-                                    style={{ textAlign: "center" }}
-                                  >
-                                    {timeSheet.status === "APPROVED" && (
-                                      <span className="font-medium text-green-600">
-                                        APPROVED
-                                      </span>
-                                    )}
-                                    {timeSheet.status === "REJECTED" && (
-                                      <span className="font-medium text-red-500">
-                                        REJECTED
-                                      </span>
-                                    )}
-                                    {timeSheet.status === "PENDING" && (
-                                      <span className="font-medium text-orange-400">
-                                        PENDING
-                                      </span>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))
-                            : null
-                        )
-                      ) : (
-                        <tr>
-                          <td colSpan="11" className="text-center">
-                            No data available
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </>
-                )}
+                                  className="ml-1"
+                                  style={{
+                                    height: "17px",
+                                    width: "17px",
+                                    backgroundColor:
+                                      timeSheet.status === "PENDING"
+                                        ? "initial"
+                                        : "#d3d3d3",
+                                    cursor:
+                                      timeSheet.status === "PENDING"
+                                        ? "pointer"
+                                        : "not-allowed",
+                                  }}
+                                  disabled={timeSheet.status !== "PENDING"}
+                                />
+                              </td>
+                              <td
+                                className="p-2 text-sm"
+                                style={{ textAlign: "center" }}
+                              >
+                                {item.employeeUniqueId}
+                              </td>
+                              <td
+                                className="p-2 text-sm"
+                                style={{ textAlign: "center" }}
+                              >
+                                {item.lastName} {item.firstName}
+                              </td>
+                              <td
+                                className="p-2 text-sm"
+                                style={{ textAlign: "center" }}
+                              >
+                                {timeSheet.timeSheetId}
+                              </td>
+                              <td
+                                className="p-2 text-[12px]"
+                                style={{ textAlign: "center" }}
+                              >
+                                {timeSheet.fromDate}
+                              </td>
+                              <td
+                                className="p-2 text-[12px]"
+                                style={{ textAlign: "center" }}
+                              >
+                                {timeSheet.toDate}
+                              </td>
+                              <td
+                                className="p-2 text-sm"
+                                style={{ textAlign: "center" }}
+                              >
+                                {timeSheet.assignedDefaultHours}
+                              </td>
+                              <td
+                                className="p-2 text-sm"
+                                style={{ textAlign: "center" }}
+                              >
+                                {timeSheet.totalWorkedHours}
+                              </td>
+                              <td
+                                className="p-2 text-sm"
+                                style={{ textAlign: "center" }}
+                              >
+                                {timeSheet.overTimeWorkedHours}
+                              </td>
+                              <td
+                                className="p-4 text-sm flex justify-center items-center"
+                                style={{ textAlign: "center" }}
+                              >
+                                {timeSheet.status === "APPROVED" && (
+                                  <span className="font-medium text-green-600">
+                                    APPROVED
+                                  </span>
+                                )}
+                                {timeSheet.status === "REJECTED" && (
+                                  <span className="font-medium text-red-500">
+                                    REJECTED
+                                  </span>
+                                )}
+                                {timeSheet.status === "PENDING" && (
+                                  <span className="font-medium text-orange-400">
+                                    PENDING
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        : null
+                    )
+                  ) : (
+                    <tr>
+                      <td colSpan="11" className="text-center">
+                        No data available
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
               </table>
             </div>
             <div className="p-4 bg-white flex justify-end items-center">
               <button
-                onClick={approvalHandler}
-                className="px-4 py-2 bg-green-500 text-white rounded mr-4"
+                onClick={handleApprove}
+                className={`px-4 py-2  mr-4 ${
+                  areButtonsDisabled
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-green-500 text-white"
+                }`}
+                disabled={areButtonsDisabled}
               >
-                Approve
+                approve
               </button>
               <button
                 onClick={handleRejectionButtonClick}
-                className="px-4 py-2 bg-red-500 text-white rounded"
+                className={`px-4 py-2  ${
+                  areButtonsDisabled
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-red-500 text-white"
+                }`}
+                disabled={areButtonsDisabled}
               >
-                Reject
+                reject
               </button>
             </div>
           </>

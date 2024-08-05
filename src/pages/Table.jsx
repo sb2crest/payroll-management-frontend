@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/auth-context";
 
 dayjs.extend(isSameOrBefore);
 
@@ -55,6 +56,8 @@ const TimesheetTable = () => {
     }));
   };
 
+  const { submittedTimestamp, setSubmittedTimestamp } = useAuth();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -67,9 +70,9 @@ const TimesheetTable = () => {
       weeklySubmissionId: parseInt(timesheetId, 10),
       startDate,
       endDate,
-      assignedDefaultHours: 40.0, // Assuming assigned default hours are static
+      assignedDefaultHours: 40.0,
       totalWeeklyWorkedHours: totalWeeklyWorkedHours,
-      totalOvertimeWorkedHours: totalWeeklyWorkedHours - 40.0, // Example calculation for overtime
+      totalOvertimeWorkedHours: totalWeeklyWorkedHours - 40.0,
     };
 
     try {
@@ -86,7 +89,17 @@ const TimesheetTable = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
+        console.log("API Response Data:", data);
+
+        // Log and store the submittedTimestamp if it exists
+        if (
+          data.weeklyWorkReportDtoList &&
+          data.weeklyWorkReportDtoList.length > 0
+        ) {
+          const report = data.weeklyWorkReportDtoList[0];
+          console.log("Submitted Timestamp:", report.submittedTimestamp);
+          setSubmittedTimestamp(report.submittedTimestamp);
+        }
         toast.success("Timesheet submitted successfully!");
         navigate("/worksheet");
       } else {
@@ -97,6 +110,10 @@ const TimesheetTable = () => {
       toast.error("Failed to submit timesheet. Please try again.");
     }
   };
+
+  useEffect(() => {
+    console.log("Updated Submitted Timestamp:", submittedTimestamp);
+  }, [submittedTimestamp]);
 
   const handleReset = () => {
     const newTimesheet = {};

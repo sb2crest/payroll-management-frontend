@@ -3,12 +3,14 @@ import axios from "axios";
 
 const AuthContext = createContext({});
 
+// eslint-disable-next-line react/prop-types
 export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(null);
   const [ID, setID] = useState("");
   const [name, setName] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true); // Add loading state
+  const [submittedTimestamp, setSubmittedTimestamp] = useState(null);
 
   const authenticateRole = async (ID, password) => {
     try {
@@ -60,7 +62,9 @@ export const AuthProvider = ({ children }) => {
         name,
         authenticateRole,
         isAuthenticated,
-        loading,
+        submittedTimestamp,
+        setSubmittedTimestamp,
+        loading
       }}
     >
       {children}
