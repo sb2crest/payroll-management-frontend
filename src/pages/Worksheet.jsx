@@ -4,6 +4,7 @@ import { useTheme } from "../context/theme-context";
 import { useAuth } from "../context/auth-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { useEffect } from "react";
 
 // Function to fetch time sheet data
 const fetchTimeSheetData = async (ID) => {
@@ -23,7 +24,7 @@ const updateWorkHours = async (data) => {
 
 const Worksheet = () => {
   const { colors } = useTheme();
-  const { ID } = useAuth();
+  const { ID, submittedTimestamp } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -78,6 +79,19 @@ const Worksheet = () => {
     }
   };
 
+  useEffect(() => {
+    console.log("submitted:", submittedTimestamp);
+  }, [submittedTimestamp]);
+
+  const submittedDate = new Date(submittedTimestamp);
+
+  const sortedTimeSheet = timeSheet.slice().sort((a, b) => {
+    return (
+      new Date(b.timestamp || submittedDate) -
+      new Date(a.timestamp || submittedDate)
+    );
+  });
+
   return (
     <div className="m-6">
       <div className="bg-white p-10 mt-6 rounded-lg shadow-md relative">
@@ -124,7 +138,7 @@ const Worksheet = () => {
                   </td>
                 </tr>
               ) : (
-                timeSheet.reverse().map((sheet, index) => (
+                sortedTimeSheet.map((sheet, index) => (
                   <tr
                     key={sheet.timeSheetId}
                     style={{
