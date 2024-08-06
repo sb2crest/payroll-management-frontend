@@ -25,6 +25,8 @@ const AddHours = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [workingDays, setWorkingDays] = useState(0);
 
   const getAllEmployeesData = async () => {
     try {
@@ -33,6 +35,8 @@ const AddHours = () => {
       const data = await getAllEmployees(ID);
       if (data) {
         setData(data);
+        const days = data.map((emp) => emp.workingDays);
+        setWorkingDays(days);
       }
     } catch (error) {
       setError(true);
@@ -120,6 +124,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
   const { colors } = useTheme();
 
   const [data, setData] = useState(null);
+  const [workingDays, setWorkingDays] = useState(null);
 
   const fetchSelectedEmployeeData = async () => {
     try {
@@ -127,6 +132,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
       if (gettingData) {
         setData(gettingData[0]);
       }
+      setWorkingDays(gettingData[0].workingDays);
     } catch (error) {
       toast.error("Error fetching data");
     }
@@ -166,6 +172,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
         <CreateModal
           data={data}
           fetchSelectedEmployeeData={fetchSelectedEmployeeData}
+          workingDays={workingDays}
         />
       </div>
 
@@ -234,7 +241,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
   );
 };
 
-const CreateModal = ({ data, fetchSelectedEmployeeData }) => {
+const CreateModal = ({ data, fetchSelectedEmployeeData, workingDays }) => {
   const { colors } = useTheme();
 
   const { ID } = useAuth();
@@ -251,15 +258,22 @@ const CreateModal = ({ data, fetchSelectedEmployeeData }) => {
 
   useEffect(() => {
     if (startDate) {
-      setEndDate(getOneWeekLater(startDate));
+      setEndDate(getOneWeekLater(startDate, workingDays));
     }
-  }, [startDate]);
+  }, [startDate, workingDays]);
 
-  const getOneWeekLater = (date) => {
-    const start = new Date(date);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 5);
-    return formatDate(end);
+  const getOneWeekLater = (startDate, workingDays) => {
+    const start = new Date(startDate);
+    let daysAdded = 0;
+
+    while (daysAdded < workingDays-1) {
+      start.setDate(start.getDate() + 1); 
+      // if (start.getDay() !== 0 && start.getDay() !== 6) {
+        daysAdded++;
+      // }
+    }
+
+    return formatDate(start);
   };
 
   const handleSubmit = async (e) => {

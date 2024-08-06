@@ -4,29 +4,30 @@ import { useTheme } from "../context/theme-context";
 import { useAuth } from "../context/auth-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { useEffect } from "react";
-
-// Function to fetch time sheet data
-const fetchTimeSheetData = async (ID) => {
-  const res = await axios.get(
-    `http://localhost:8080/api/payrollEmployee/listOfTimeSheets?employeeUniqueId=${ID}`
-  );
-  return res.data.timeSheet;
-};
-
-// Function to update worked hours
-const updateWorkHours = async (data) => {
-  await axios.put(
-    `http://localhost:8080/api/payrollManager/updateWeeklyWorkedHours`,
-    data
-  );
-};
+import { useEffect, useState } from "react";
 
 const Worksheet = () => {
   const { colors } = useTheme();
-  const { ID, submittedTimestamp } = useAuth();
+  const { ID } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // Function to fetch time sheet data
+  const fetchTimeSheetData = async (ID) => {
+    const res = await axios.get(
+      `http://localhost:8080/api/payrollEmployee/listOfTimeSheets?employeeUniqueId=${ID}`
+    );
+    console.log("res:", res.data);
+    return res.data.timeSheet;
+  };
+
+  // Function to update worked hours
+  const updateWorkHours = async (data) => {
+    await axios.put(
+      `http://localhost:8080/api/payrollManager/updateWeeklyWorkedHours`,
+      data
+    );
+  };
 
   // Query to fetch time sheet data
   const { data: timeSheet = [], status: queryStatus } = useQuery({
@@ -79,18 +80,25 @@ const Worksheet = () => {
     }
   };
 
+  const [sortedTimeSheets, setSortedTimeSheets] = useState([]);
+
   useEffect(() => {
-    console.log("submitted:", submittedTimestamp);
-  }, [submittedTimestamp]);
+    if (timeSheet) {
+      const sheetsWithTimestamp = timeSheet.filter(
+        (sheet) => sheet.submittedTimestamp
+      );
+      const sheetsWithoutTimestamp = timeSheet.filter(
+        (sheet) => !sheet.submittedTimestamp
+      );
 
-  const submittedDate = new Date(submittedTimestamp);
+      const sortedSheets = [...sheetsWithTimestamp].sort(
+        (a, b) =>
+          new Date(b.submittedTimestamp) - new Date(a.submittedTimestamp)
+      );
 
-  const sortedTimeSheet = timeSheet.slice().sort((a, b) => {
-    return (
-      new Date(b.timestamp || submittedDate) -
-      new Date(a.timestamp || submittedDate)
-    );
-  });
+      setSortedTimeSheets([...sortedSheets, ...sheetsWithoutTimestamp]);
+    }
+  }, [timeSheet]);
 
   return (
     <div className="m-6">
@@ -138,7 +146,7 @@ const Worksheet = () => {
                   </td>
                 </tr>
               ) : (
-                sortedTimeSheet.map((sheet, index) => (
+                sortedTimeSheets.map((sheet, index) => (
                   <tr
                     key={sheet.timeSheetId}
                     style={{
