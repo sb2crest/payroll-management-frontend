@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -9,27 +10,17 @@ import {
 } from "../helpers/theme-api";
 import { useAuth } from "../context/auth-context";
 import { CiSearch } from "react-icons/ci";
+import { BsCalendar2Date } from "react-icons/bs";
+import { FaRegAddressCard } from "react-icons/fa6";
+import { GrStatusInfo } from "react-icons/gr";
+import { SiNamecheap } from "react-icons/si";
+import "react-datepicker/dist/react-datepicker.css";
+import toast from "react-hot-toast";
 
 const Timesheet = () => {
   /* destructuring for ID and theme */
   const { ID } = useAuth();
   const { colors } = useTheme();
-
-  /* sort default data */
-  const [timeSheetData, setTimeSheetData] = useState([]);
-  // eslint-disable-next-line no-unused-vars
-  const [sortOrder, setSortOrder] = useState("asc"); // or "desc"
-
-  const sortData = (data) => {
-    const sortedData = data.sort((a, b) => {
-      const timestampA = new Date(a.submittedTimestamp).getTime();
-      const timestampB = new Date(b.submittedTimestamp).getTime();
-      return sortOrder === "asc"
-        ? timestampA - timestampB
-        : timestampB - timestampA;
-    });
-    setTimeSheetData(sortedData);
-  };
 
   /* time sheet data */
   const [startDate, setStartDate] = useState("");
@@ -62,12 +53,9 @@ const Timesheet = () => {
       const res = await axios.get(
         `http://localhost:8080/api/payrollEmployee/filterData?startDate=${date1}&endDate=${date2}&managerUniqueId=${ID}`
       );
-      const dataWithTimestamps = res.data.map((item) => ({
-        ...item,
-        submittedTimestamp: item.submittedTimestamp || null,
-      }));
-      setTimeSheetData(dataWithTimestamps);
-      return dataWithTimestamps;
+      const data = res.data;
+      console.log("Data:", data);
+      return data;
     } catch (error) {
       console.error("Failed to fetch data", error);
       throw new Error("Failed to fetch data");
@@ -99,6 +87,7 @@ const Timesheet = () => {
       console.log("Filtered Data:", data);
       return data;
     } catch (error) {
+      toast.error("No Match Found", { id: "filter" });
       console.error("Failed to search with date", error);
     }
   };
@@ -123,6 +112,7 @@ const Timesheet = () => {
       setFilteredDataWithID(true);
       setFiltered(false);
     } catch (error) {
+      toast.error("No Match Found", { id: "filter" });
       console.error("Failed to filter with id", error);
     }
   };
@@ -138,15 +128,66 @@ const Timesheet = () => {
         `http://localhost:8080/api/payrollEmployee/filterEmployeesByFullName?managerUniqueId=${ID}&employeeName=${searchWithName}`
       );
       const data = res.data;
+      setResponse(data);
       console.log("Filtered data with name:", data);
       setDataFilteredWithName(data);
       setFilteredDataWithName(true);
     } catch (error) {
+      toast.error("No Match Found", { id: "filter" });
       console.error("Failed to filter with name", error);
     }
   };
 
-  // Determine which data to render
+  /* search with report status */
+  const [reportStatus, setReportStatus] = useState("");
+  const [dataFilteredByReportStatus, setDataFilteredByReportStatus] = useState(
+    []
+  );
+  const [filteredDataByReportStatus, setFilteredDataByReportStatus] =
+    useState(false);
+
+  const filterByReportStatus = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/payrollEmployee/filterEmployeeByReportStatus?managerUniqueId=${ID}&reportStatus=${reportStatus}`
+      );
+      const data = res.data;
+      setDataFilteredByReportStatus(data);
+      setFilteredDataByReportStatus(true);
+      console.log("Filtered with status:", data);
+    } catch (error) {
+      toast.error("No Match Found", { id: "filter" });
+      console.error("Failed to filter with report status", error);
+    }
+  };
+
+  /* sort timesheet */
+  const [response, setResponse] = useState([]);
+
+  const sortTimeSheets = (response) => {
+    return response.map((record) => {
+      if (record.timeSheetList) {
+        return {
+          ...record,
+          timeSheetList: record.timeSheetList.sort((a, b) => {
+            if (a.submittedTimestamp === null && b.submittedTimestamp !== null)
+              return 1;
+            if (a.submittedTimestamp !== null && b.submittedTimestamp === null)
+              return -1;
+            if (a.submittedTimestamp === null && b.submittedTimestamp === null)
+              return 0;
+            return (
+              new Date(b.submittedTimestamp) - new Date(a.submittedTimestamp)
+            );
+          }),
+        };
+      }
+      return record;
+    });
+  };
+
+  const sortedRecords = sortTimeSheets(data);
+
   const dataToRender =
     filteredDataWithDate.length > 0
       ? filteredDataWithDate
@@ -154,7 +195,9 @@ const Timesheet = () => {
       ? dataFilteredWithID
       : dataFilteredWithName.length > 0
       ? dataFilteredWithName
-      : timeSheetData;
+      : dataFilteredByReportStatus.length > 0
+      ? dataFilteredByReportStatus
+      : sortedRecords;
 
   /* selecting multiple records */
   const [selectedRows, setSelectedRows] = useState([]);
@@ -212,13 +255,10 @@ const Timesheet = () => {
         await filterWithName();
       }
 
-      // Extract timestamps from the response
-      const updatedData = res.map((response) => ({
-        ...response,
-        submittedTimestamp: response.submittedTimestamp || null,
-      }));
-      setTimeSheetData((prevData) => [...prevData, ...updatedData]);
-      sortData(updatedData);
+      if (filteredDataByReportStatus) {
+        await filterByReportStatus();
+      }
+
       await refetch();
     } catch (error) {
       console.error("Error approving timesheets:", error);
@@ -281,6 +321,126 @@ const Timesheet = () => {
     return `${r}, ${g}, ${b}`;
   };
 
+  /* filters */
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
+  const closeDropdown = () => setIsDropdownOpen(false);
+
+  const [start, setStart] = useState(null);
+  const [end, setEnd] = useState(null);
+
+  const [selectedFilter, setSelectedFilter] = useState(null);
+
+  const handleFilterClick = (filter) => {
+    setSelectedFilter(filter);
+    setIsDropdownOpen(false);
+  };
+
+  const renderFilterContent = () => {
+    switch (selectedFilter) {
+      case "date":
+        return (
+          <div className="flex items-center">
+            <div className="border-b border-gray-300">
+              <input
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="border-none border-gray-300 text-gray-900 text-sm rounded-lg p-2 outline-none"
+                placeholder="Start Date"
+              />
+            </div>
+            <span className="mx-4 text-gray-500"></span>
+            <div className="border-b border-gray-300">
+              <input
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="border-none border-gray-300 text-gray-900 text-sm rounded-lg p-2 outline-none"
+                placeholder="End Date"
+              />
+            </div>
+            <button className="px-5" onClick={handleSearchButtonClick}>
+              <CiSearch className="text-lg" />
+            </button>
+          </div>
+        );
+      case "employeeID":
+        return (
+          <div
+            className="relative max-w-[220px] border-[1px] rounded-lg overflow-hidden"
+            style={{ borderColor: colors.accent }}
+          >
+            <input
+              type="text"
+              className="py-2 text-sm outline-none pl-5 bg-white w-full"
+              placeholder="Search by Employee ID"
+              value={searchWithID}
+              onChange={(e) => setSearchWithID(e.target.value)}
+            />
+            <button
+              className="absolute top-1/2 right-2 transform -translate-y-1/2 border-none cursor-pointer rounded-l-lg"
+              onClick={(e) => {
+                e.preventDefault();
+                filterWithId();
+              }}
+            >
+              <CiSearch />
+            </button>
+          </div>
+        );
+      case "employeeName":
+        return (
+          <div
+            className="relative max-w-[220px] border-[1px] rounded-lg overflow-hidden"
+            style={{ borderColor: colors.accent }}
+          >
+            <input
+              type="text"
+              className="py-2 text-sm outline-none pl-5 bg-white w-full"
+              placeholder="Search by Employee Name"
+              value={searchWithName}
+              onChange={(e) => setSearchWithName(e.target.value)}
+            />
+            <button
+              className="absolute top-1/2 right-2 transform -translate-y-1/2 border-none cursor-pointer rounded-l-lg"
+              onClick={(e) => {
+                e.preventDefault();
+                filterWithName();
+              }}
+            >
+              <CiSearch />
+            </button>
+          </div>
+        );
+      case "reportStatus":
+        return (
+          <div
+            className="relative max-w-[220px] border-[1px] rounded-lg overflow-hidden"
+            style={{ borderColor: colors.accent }}
+          >
+            <input
+              type="text"
+              className="py-2 text-sm outline-none pl-5 bg-white w-full"
+              placeholder="Search by Report Status"
+              value={reportStatus}
+              onChange={(e) => setReportStatus(e.target.value)}
+            />
+            <button
+              className="absolute top-1/2 right-2 transform -translate-y-1/2 border-none cursor-pointer rounded-l-lg"
+              onClick={(e) => {
+                e.preventDefault();
+                filterByReportStatus();
+              }}
+            >
+              <CiSearch />
+            </button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       {" "}
@@ -327,7 +487,7 @@ const Timesheet = () => {
           </div>
         ) : (
           <>
-            <div className="flex">
+            {/* <div className="flex">
               <div>
                 <p className="pt-0 pb-2 px-5 text-gray-400 text-[14px]">
                   Search by start and end date
@@ -398,6 +558,79 @@ const Timesheet = () => {
                   <CiSearch />
                 </button>
               </div>
+            </div> */}
+            <div>
+              {selectedFilter === null ? (
+                <>
+                  <button
+                    style={{ color: colors.primary }}
+                    className="bg-white font-normal py-2 px-10 rounded-2xl shadow focus:outline-none"
+                    onClick={toggleDropdown}
+                  >
+                    Add Filter +
+                  </button>
+                  {isDropdownOpen && (
+                    <div
+                      className="absolute mt-2 w-48 bg-white rounded-md shadow-lg z-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <p
+                        className="px-4 py-2 hover:bg-gray-100 text-gray-400 hover:text-black text-sm hover:font-medium flex items-center cursor-pointer"
+                        onClick={() => handleFilterClick("date")}
+                      >
+                        <span>
+                          <BsCalendar2Date className="text-gray-400" />
+                        </span>
+                        <span className="px-3">Date</span>
+                      </p>
+                      <p
+                        className="px-4 py-2 hover:bg-gray-100 text-sm text-gray-400 hover:text-black hover:font-medium flex items-center cursor-pointer"
+                        onClick={() => handleFilterClick("employeeID")}
+                      >
+                        <span>
+                          <FaRegAddressCard className="text-gray-400" />
+                        </span>
+                        <span className="px-3">Employee ID</span>
+                      </p>
+                      <p
+                        className="px-4 py-2 hover:bg-gray-100 text-sm text-gray-400 hover:text-black hover:font-medium flex items-center cursor-pointer"
+                        onClick={() => handleFilterClick("employeeName")}
+                      >
+                        <span>
+                          <SiNamecheap className="text-gray-400" />
+                        </span>
+                        <span className="px-3">Employee Name</span>
+                      </p>
+                      <p
+                        className="px-4 py-2 hover:bg-gray-100 text-sm text-gray-400 hover:text-black hover:font-medium flex items-center cursor-pointer"
+                        onClick={() => handleFilterClick("reportStatus")}
+                      >
+                        <span>
+                          <GrStatusInfo className="text-gray-400" />
+                        </span>
+                        <span className="px-3">Report Status</span>
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {renderFilterContent()}
+                  <p
+                    className="text-sm font-thin underline cursor-pointer pt-2"
+                    style={{ color: colors.primary }}
+                    onClick={() => {
+                      setSelectedFilter(null);
+                      setFromDate("");
+                      setToDate("");
+                      setSearchWithID("");
+                      setSearchWithName("");
+                    }}
+                  >
+                    Close above filter
+                  </p>
+                </>
+              )}
             </div>
             <div style={{ maxHeight: "280px", overflowY: "auto" }}>
               <table className="my-auto w-full rounded mt-5  ">
@@ -570,7 +803,7 @@ const Timesheet = () => {
                 }`}
                 disabled={areButtonsDisabled}
               >
-                approve
+                Approve
               </button>
               <button
                 onClick={handleRejectionButtonClick}
@@ -581,7 +814,7 @@ const Timesheet = () => {
                 }`}
                 disabled={areButtonsDisabled}
               >
-                reject
+                Reject
               </button>
             </div>
           </>

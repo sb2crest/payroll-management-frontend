@@ -4,12 +4,13 @@ import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/auth-context";
+import { useTheme } from "../context/theme-context";
 
 dayjs.extend(isSameOrBefore);
 
 const TimesheetTable = () => {
   const location = useLocation();
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
 
   const timesheetId = queryParams.get("timesheetId");
@@ -18,18 +19,12 @@ const TimesheetTable = () => {
 
   const [timesheet, setTimesheet] = useState({});
   const [dates, setDates] = useState([]);
-  // eslint-disable-next-line no-unused-vars
   const [endDay, setEndDay] = useState(dayjs(endDate));
 
   useEffect(() => {
     if (startDate && endDate) {
       const start = dayjs(startDate);
       const end = dayjs(endDate);
-      // eslint-disable-next-line no-unused-vars
-      const nextTwoDays = [
-        end.add(1, "day").format("YYYY-MM-DD"),
-        end.add(2, "day").format("YYYY-MM-DD"),
-      ];
 
       const generatedDates = [];
       const newTimesheet = {};
@@ -61,7 +56,6 @@ const TimesheetTable = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prepare data for the API call
     const totalWeeklyWorkedHours = Object.values(timesheet).reduce(
       (acc, hours) => acc + (parseFloat(hours) || 0),
       0
@@ -91,7 +85,6 @@ const TimesheetTable = () => {
         const data = await response.json();
         console.log("API Response Data:", data);
 
-        // Log and store the submittedTimestamp if it exists
         if (
           data.weeklyWorkReportDtoList &&
           data.weeklyWorkReportDtoList.length > 0
@@ -131,85 +124,116 @@ const TimesheetTable = () => {
     return isNaN(number) ? "" : number.toFixed(2);
   };
 
-  // Determine if a date is editable
   const isEditable = (date) => {
     return dayjs(date).isSameOrBefore(endDay);
   };
 
+  const { colors } = useTheme();
+
+  const hexToRgb = (hex) => {
+    hex = hex.replace(/^#/, "");
+    let bigint = parseInt(hex, 16);
+    let r = (bigint >> 16) & 255;
+    let g = (bigint >> 8) & 255;
+    let b = bigint & 255;
+    return `${r}, ${g}, ${b}`;
+  };
+
   return (
-    <div className="p-4 m-10 border border-gray-300 shadow-md bg-gray-50">
-      <h1 className="text-2xl text-center mb-6 text-gray-800">
-        # {timesheetId}
-      </h1>
-      <form onSubmit={handleSubmit}>
-        <div className="overflow-hidden">
-          <table className="border-collapse">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-sm text-left font-light whitespace-nowrap">
-                  Timesheet ID
-                </th>
-                <th className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-left text-sm font-light whitespace-nowrap">
-                  Date
-                </th>
-                {dates.map((date) => (
+    <div className="flex justify-center items-center m-10">
+      <div>
+        <div className="mb-5 flex flex-col">
+          <span className="font-medium text-sm text-gray-400">
+            Timesheet ID
+          </span>
+          <span className="font-normal text-xl">{timesheetId}</span>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="overflow-x-auto">
+            <table className="border-collapse w-full">
+              <thead>
+                <tr>
                   <th
-                    key={date}
-                    className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-left font-light whitespace-nowrap"
+                    className="text-center px-4 py-2 text-white font-normal text-sm whitespace-nowrap"
+                    style={{ backgroundColor: colors.primary }}
                   >
-                    {dayjs(date).format("YYYY-MM-DD")}
+                    Date
                   </th>
-                ))}
-                <th className="border border-gray-300 px-4 py-2 bg-gray-500 text-white text-left font-light whitespace-nowrap">
-                  Total Hours
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className=" whitespace-nowrap">
-                <td className="border border-gray-300 px-4 py-2 bg-gray-200 text-left">
-                  {timesheetId}
-                </td>
-                <td className="border border-gray-300 px-4 py-2 bg-gray-200 text-left">
-                  Hours Worked
-                </td>
-                {dates.map((date) => (
-                  <td key={date} className="border border-gray-300 px-4 py-2">
-                    <input
-                      name={date}
-                      value={formatHours(timesheet[date])}
-                      onChange={handleChange}
-                      min="0"
-                      className={`w-full p-2 border border-gray-300 rounded-md text-gray-900 ${
-                        isEditable(date) ? "" : "bg-gray-200 cursor-not-allowed"
-                      }`}
-                      disabled={!isEditable(date)}
-                    />
+                  {dates.map((date) => (
+                    <th
+                      key={date}
+                      className="text-center px-4 py-2 text-white font-normal text-sm whitespace-nowrap"
+                      style={{ backgroundColor: colors.primary }}
+                    >
+                      <div>
+                        <div className="text-xs font-medium">
+                          {dayjs(date).format("dddd")}
+                        </div>
+                        <div>{dayjs(date).format("YYYY-MM-DD")}</div>
+                      </div>
+                    </th>
+                  ))}
+                  <th
+                    className="text-center px-4 py-2 text-white font-normal text-sm whitespace-nowrap"
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    Total Hours
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td
+                    className="text-center border-b border-l px-4 py-2 font-normal text-sm whitespace-nowrap"
+                    style={{ color: colors.secondary }}
+                  >
+                    Hours
                   </td>
-                ))}
-                <td className="border border-gray-300 px-4 py-2 text-center">
-                  {totalHours.toFixed(2)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="flex justify-between mt-6">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="py-2 px-4 bg-gray-500 text-white  hover:bg-red-600"
-          >
-            Reset
-          </button>
-          <button
-            type="submit"
-            className="py-2 px-4 bg-gray-500 text-white  hover:bg-green-600"
-          >
-            Submit
-          </button>
-        </div>
-      </form>
+                  {dates.map((date) => (
+                    <td key={date} className="border-b px-4 py-2">
+                      <input
+                        name={date}
+                        value={formatHours(timesheet[date])}
+                        onChange={handleChange}
+                        min="0"
+                        className={`w-full p-2 outline-none border border-gray-300 rounded-md text-gray-900 ${
+                          isEditable(date)
+                            ? ""
+                            : "bg-gray-200 cursor-not-allowed"
+                        }`}
+                        disabled={!isEditable(date)}
+                      />
+                    </td>
+                  ))}
+                  <td
+                    colSpan={dates.length}
+                    className="border-b border-r px-4 py-2 text-center font-normal"
+                  >
+                    {totalHours.toFixed(2)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="flex justify-between mt-6">
+            <button
+              type="button"
+              onClick={handleReset}
+              style={{ color: colors.primary }}
+              className="bg-white font-semibold py-2 px-10 rounded-2xl shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+              Reset
+            </button>
+            <button
+              type="submit"
+              style={{ color: colors.primary }}
+              className="bg-white font-semibold py-2 px-10 rounded-2xl shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useTheme } from "../context/theme-context";
-import { useEffect, useLayoutEffect, useState } from "react";
+import {  useLayoutEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/auth-context";
@@ -11,10 +11,8 @@ function Login() {
   const { companyID } = useParams();
   const { colors, fetchCompanyThemeData, setIsManagerStatus } = useTheme();
 
+  // eslint-disable-next-line no-unused-vars
   const { authenticateRole, role } = useAuth();
-
-  const uniqueId = localStorage.setItem("uniqueId",ID);
-  console.log(uniqueId);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
