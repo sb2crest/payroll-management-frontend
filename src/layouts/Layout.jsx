@@ -1,7 +1,6 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
-import { useTheme } from "../context/theme-context";
 import { useAuth } from "../context/auth-context";
 import { useEffect } from "react";
 
@@ -9,12 +8,13 @@ function Layout() {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
+  const { companyID } = useParams();
+
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      navigate("/login/1");
+      navigate(`/login/${companyID}`);
     }
   }, [loading, isAuthenticated]);
-  const { theme } = useTheme();
 
   if (loading) {
     return <div>Loading...</div>;

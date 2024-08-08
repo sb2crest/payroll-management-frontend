@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { Link, useLocation } from "react-router-dom";
 import { RiDashboardFill } from "react-icons/ri";
 import { FaClipboard } from "react-icons/fa";
@@ -10,12 +11,21 @@ import { IoIosArrowForward } from "react-icons/io";
 import { IoPeopleSharp } from "react-icons/io5";
 import { useTheme } from "../context/theme-context";
 import { useAuth } from "../context/auth-context";
+import { useEffect } from "react";
 
 function Sidebar() {
   const [open, setOpen] = useState(true);
   const toggleSidebar = () => setOpen(!open);
   const { colors } = useTheme();
   const { role } = useAuth();
+
+  useEffect(() => {
+    console.log("Role has changed to:", role);
+  }, [role]);
+
+  if (!role) {
+    return null; // Or a loading spinner, etc.
+  }
 
   const sidebarLinkItems = [
     {
