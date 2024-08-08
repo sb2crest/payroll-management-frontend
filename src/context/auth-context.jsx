@@ -16,10 +16,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post(
         "http://localhost:8080/api/data-details/login",
-        {
-          uniqueId: ID,
-          password: password,
-        }
+        { uniqueId: ID, password: password }
       );
       console.log("Response for authenticating the role:", response);
       const data = response.data;
@@ -41,17 +38,42 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const storedID = localStorage.getItem("ID");
-    const storedRole = localStorage.getItem("Role");
-    const storedName = localStorage.getItem("Name");
+    const initializeAuth = async () => {
+      const storedID = localStorage.getItem("ID");
+      const storedRole = localStorage.getItem("Role");
+      const storedName = localStorage.getItem("Name");
 
-    if (storedID && storedRole && storedName) {
-      setID(storedID);
-      setRole(storedRole);
-      setName(storedName);
-      setIsAuthenticated(true);
-    }
-    setLoading(false);
+      if (storedID && storedRole && storedName) {
+        try {
+          // Validate stored credentials with the server
+          const response = await axios.post(
+            "http://localhost:8080/api/data-details/validate",
+            { uniqueId: storedID }
+          );
+
+          if (response.data.valid) {
+            setID(storedID);
+            setRole(storedRole);
+            setName(storedName);
+            setIsAuthenticated(true);
+          } else {
+            // Handle invalid stored data
+            localStorage.removeItem("ID");
+            localStorage.removeItem("Role");
+            localStorage.removeItem("Name");
+            setIsAuthenticated(false);
+          }
+        } catch (e) {
+          console.log("Error validating stored data:", e);
+          setIsAuthenticated(false);
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   return (
@@ -64,10 +86,10 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         submittedTimestamp,
         setSubmittedTimestamp,
-        loading
+        loading,
       }}
     >
-      {children}
+      {loading ? <div>Loading...</div> : children}
     </AuthContext.Provider>
   );
 };

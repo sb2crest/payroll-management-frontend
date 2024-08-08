@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTheme } from "../context/theme-context";
 import Notifications from "./Notifications";
 import { CiSearch } from "react-icons/ci";
@@ -11,7 +11,9 @@ import { CgProfile } from "react-icons/cg";
 import { useAuth } from "../context/auth-context";
 
 const Navbar = () => {
+  // eslint-disable-next-line no-unused-vars
   const [hasNewMail, setHasNewMail] = useState(true);
+  // eslint-disable-next-line no-unused-vars
   const [hasNewNotification, setHasNewNotification] = useState(true);
 
   const { colors } = useTheme();
@@ -71,7 +73,12 @@ export default Navbar;
 
 const PersonCard = () => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const { companyID } = useParams();
+
   const handleLogOut = () => {
+    navigate(`/login/${companyID}`);
     setOpen(false);
   };
   const { colors } = useTheme();
