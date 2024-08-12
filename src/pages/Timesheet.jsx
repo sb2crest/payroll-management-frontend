@@ -64,7 +64,7 @@ const Timesheet = () => {
     try {
       const res = await handleApproved(submissions);
       if (isFilterActive) {
-        filterDataBasedOnCriteria();
+        filterDataBasedOnCriteria(currentPage, rowsPerPage);
       }
       await refetch();
     } catch (error) {
@@ -133,6 +133,10 @@ const Timesheet = () => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
 
   const listAllEmployees = async () => {
+    if (!searchWithName.trim() || /[^a-zA-Z0-9\s]/.test(searchWithName)) {
+      setFilteredEmployees([]);
+      return;
+    }
     try {
       const res = await axios.get(
         `http://localhost:8080/api/payrollEmployee/filterEmployeesByName?managerUniqueId=${ID}&employeeName=${searchWithName}`
@@ -164,6 +168,15 @@ const Timesheet = () => {
   const handleSelect = (name) => {
     setSearchWithName(name);
     setShowDropdown(false);
+  };
+
+  const highlightText = (text, searchTerm) => {
+    if (!searchTerm.trim()) return text;
+    const regex = new RegExp(`(${searchTerm})`, "gi");
+    return text.replace(
+      regex,
+      (match) => `<span class="bg-yellow-200">${match}</span>`
+    );
   };
 
   const handleReportStatusChange = (status) => {
@@ -205,6 +218,8 @@ const Timesheet = () => {
     return isSelected ? statusStyles[status] : defaultStyle;
   };
 
+  const [hasNextPage, setHasNextPage] = useState(true);
+
   const filterDataBasedOnCriteria = async (currentPage, rowsPerPage) => {
     try {
       const payload = {
@@ -225,6 +240,7 @@ const Timesheet = () => {
       setFilteredData(res.data.content);
       setIsFilterActive(true);
       setTotalPages(res.data.totalPages - 1);
+      setHasNextPage((currentPage + 1) < totalPages);
     } catch (e) {
       toast.error("No match found");
       console.error("Error filtering data:", e);
@@ -265,7 +281,6 @@ const Timesheet = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [totalPages, setTotalPages] = useState(0);
-  const [hasNextPage, setHasNextPage] = useState(true);
 
   const getDateData = async () => {
     const today = new Date();
@@ -375,6 +390,12 @@ const Timesheet = () => {
 
   const dataToRender = isFilterActive ? filteredData : sortedRecords;
 
+  useEffect(() => {
+    if (isFilterActive) {
+      filterDataBasedOnCriteria(currentPage, rowsPerPage);
+    }
+  }, [currentPage, rowsPerPage, isFilterActive]);
+
   return (
     <>
       {" "}
@@ -461,9 +482,10 @@ const Timesheet = () => {
                           key={index}
                           className="p-2 cursor-pointer hover:bg-gray-200"
                           onClick={() => handleSelect(name)}
-                        >
-                          {name}
-                        </div>
+                          dangerouslySetInnerHTML={{
+                            __html: highlightText(name, searchWithName),
+                          }}
+                        />
                       ))
                     ) : (
                       <div className="p-2">No results found</div>
