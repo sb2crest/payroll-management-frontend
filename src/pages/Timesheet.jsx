@@ -237,13 +237,14 @@ const Timesheet = () => {
         payload
       );
       const data = res.data;
-      setFilteredData(res.data.content);
+      setFilteredData(data.content);
+      setTotalPages(data.totalPages); 
+      setHasNextPage(data.content.length === rowsPerPage); 
       setIsFilterActive(true);
-      setTotalPages(res.data.totalPages - 1);
-      setHasNextPage((currentPage + 1) < totalPages);
     } catch (e) {
       toast.error("No match found");
       console.error("Error filtering data:", e);
+      setHasNextPage(false);
     }
   };
 
@@ -268,7 +269,7 @@ const Timesheet = () => {
 
   const handleRowsPerPageChange = (event) => {
     setRowsPerPage(parseInt(event.target.value));
-    setCurrentPage(0); // Reset to page 0 when changing rows per page
+    setCurrentPage(0);
   };
 
   const handleCurrentPageChange = (direction) => {
@@ -317,15 +318,14 @@ const Timesheet = () => {
       pageNumber: currentPage,
       size: rowsPerPage,
     };
-    console.log("request:", request);
     try {
+      console.log("calling ");
       const res = await axios.post(
         "http://localhost:8080/api/payrollEmployee/filterData",
         request
       );
-      console.log("calling fetchTimeSheetData");
       const data = res.data.content;
-      setTotalPages(res.data.totalPages - 1);
+      setTotalPages(res.data.totalPages);
       return {
         data,
         hasNextPage: res.data.content.length === rowsPerPage,
@@ -348,15 +348,20 @@ const Timesheet = () => {
       ...reportStatus,
     ],
     queryFn: async () => {
-      const { data, hasNextPage } = await fetchTimeSheetData(
-        startDate,
-        endDate,
-        currentPage,
-        rowsPerPage
-      );
-      setHasNextPage(hasNextPage);
-      return data;
+      if (isFilterActive) {
+        return filteredData;
+      } else {
+        const { data, hasNextPage } = await fetchTimeSheetData(
+          startDate,
+          endDate,
+          currentPage,
+          rowsPerPage
+        );
+        setHasNextPage(hasNextPage);
+        return data;
+      }
     },
+    keepPreviousData: true,
   });
 
   /* sort timesheet */
@@ -731,7 +736,7 @@ const Timesheet = () => {
                   </button>
                   <span>
                     <span className="text-sm">Page</span> {currentPage + 1} of{" "}
-                    {totalPages + 1}
+                    {totalPages}
                   </span>
                   <button
                     className="cursor-pointer flex items-center"
