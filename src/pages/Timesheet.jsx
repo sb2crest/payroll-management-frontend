@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useTheme } from "../context/theme-context";
@@ -12,86 +12,13 @@ import { useAuth } from "../context/auth-context";
 import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
 import "./custom.css";
+import { GrPrevious } from "react-icons/gr";
+import { GrNext } from "react-icons/gr";
 
 const Timesheet = () => {
   /* destructuring for ID and theme */
   const { ID } = useAuth();
   const { colors } = useTheme();
-
-  /* time sheet data */
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-
-  const getDateData = async () => {
-    const today = new Date();
-
-    const start = new Date();
-
-    start.setDate(today.getDate() - 30);
-
-    const formatDate = (date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    };
-
-    setStartDate(formatDate(start));
-    setEndDate(formatDate(today));
-  };
-
-  useEffect(() => {
-    getDateData();
-  }, []);
-
-  const fetchTimeSheetData = async (date1, date2) => {
-    try {
-      const res = await axios.get(
-        `http://localhost:8080/api/payrollEmployee/filterData?startDate=${date1}&endDate=${date2}&managerUniqueId=${ID}`
-      );
-      const data = res.data;
-      console.log("Data:", data);
-      return data;
-    } catch (error) {
-      console.error("Failed to fetch data", error);
-      throw new Error("Failed to fetch data");
-    }
-  };
-
-  // eslint-disable-next-line no-unused-vars
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["timeSheetData", ID],
-    queryFn: () => fetchTimeSheetData(startDate, endDate),
-  });
-
-  /* sort timesheet */
-  const sortTimeSheets = (response) => {
-    if (!response || response.length === 0) {
-      return response;
-    }
-
-    return response.map((record) => {
-      if (record.timeSheetList) {
-        return {
-          ...record,
-          timeSheetList: record.timeSheetList.sort((a, b) => {
-            if (a.submittedTimestamp === null && b.submittedTimestamp !== null)
-              return 1;
-            if (a.submittedTimestamp !== null && b.submittedTimestamp === null)
-              return -1;
-            if (a.submittedTimestamp === null && b.submittedTimestamp === null)
-              return 0;
-            return (
-              new Date(b.submittedTimestamp) - new Date(a.submittedTimestamp)
-            );
-          }),
-        };
-      }
-      return record;
-    });
-  };
-
-  const sortedRecords = sortTimeSheets(data);
 
   /* selecting multiple records */
   const [selectedRows, setSelectedRows] = useState([]);
@@ -195,29 +122,6 @@ const Timesheet = () => {
   };
 
   /* filters */
-  const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState("");
-
-  const listAllEmployees = async () => {
-    try {
-      const res = await axios.get(
-        `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=${ID}`
-      );
-      const data = res.data;
-      const employeeOptions = data.map((employee) => ({
-        value: employee.employeeUniqueId,
-        label: `${employee.firstName} ${employee.lastName}`,
-      }));
-      setEmployees(employeeOptions);
-    } catch (e) {
-      console.error("Error fetching employees:", e);
-    }
-  };
-
-  useEffect(() => {
-    listAllEmployees();
-  }, []);
-
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [searchWithID, setSearchWithID] = useState("");
@@ -225,39 +129,111 @@ const Timesheet = () => {
   const [reportStatus, setReportStatus] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [isFilterActive, setIsFilterActive] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
 
-  const filterDataBasedOnCriteria = async () => {
+  const listAllEmployees = async () => {
     try {
-      const formattedReportStatus = Array.isArray(reportStatus)
-        ? reportStatus.map((status) => status.toUpperCase())
-        : typeof reportStatus === "string"
-        ? [reportStatus.toUpperCase()]
-        : [];
+      const res = await axios.get(
+        `http://localhost:8080/api/payrollEmployee/filterEmployeesByName?managerUniqueId=${ID}&employeeName=${searchWithName}`
+      );
+      const data = res.data;
+      setFilteredEmployees(data);
+      console.log("feching employee list:", data);
+    } catch (e) {
+      console.error("Error fetching employees:", e);
+    }
+  };
 
-      console.log("Formatted Report Status:", formattedReportStatus);
+  useEffect(() => {
+    listAllEmployees();
+  }, [searchWithName]);
 
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setSearchWithName(value);
+    if (value.trim() === "") {
+      setShowDropdown(false);
+    } else {
+      setShowDropdown(true);
+    }
+  };
+
+  const handleSelect = (name) => {
+    setSearchWithName(name);
+    setShowDropdown(false);
+  };
+
+  const handleReportStatusChange = (status) => {
+    if (reportStatus.includes(status)) {
+      setReportStatus((prevStatus) => prevStatus.filter((s) => s !== status));
+      if (selectedStatus === status) {
+        setSelectedStatus(null);
+      }
+    } else {
+      setReportStatus((prevStatus) => [...prevStatus, status]);
+      setSelectedStatus(status);
+    }
+  };
+
+  const getButtonStyle = (status) => {
+    const defaultStyle = {
+      backgroundColor: "#eeeeee",
+      color: "gray",
+    };
+
+    // Define the styles for each status
+    const statusStyles = {
+      APPROVED: {
+        backgroundColor: "#90EE90",
+        color: "#008000",
+      },
+      REJECTED: {
+        backgroundColor: "#FAA0A0",
+        color: "#FF0000",
+      },
+      PENDING: {
+        backgroundColor: "#FAD5A5",
+        color: "#FFA500",
+      },
+    };
+
+    const isSelected = reportStatus.includes(status);
+
+    return isSelected ? statusStyles[status] : defaultStyle;
+  };
+
+  const filterDataBasedOnCriteria = async (currentPage, rowsPerPage) => {
+    try {
       const payload = {
         managerUniqueId: ID || null,
         employeeUniqueId: searchWithID || null,
         employeeName: searchWithName || null,
+        reportStatus: reportStatus,
         startDate: fromDate || null,
         endDate: toDate || null,
-        reportStatus:
-          formattedReportStatus.length > 0 ? formattedReportStatus : null,
+        pageNumber: currentPage,
+        pageSize: rowsPerPage,
       };
-      console.log("payload:", payload);
       const res = await axios.post(
         `http://localhost:8080/api/payrollEmployee/filterDataBasedOnCriteria`,
         payload
       );
       const data = res.data;
-      setFilteredData(data);
-      console.log(data);
+      setFilteredData(res.data.content);
       setIsFilterActive(true);
+      setTotalPages(res.data.totalPages - 1);
     } catch (e) {
       toast.error("No match found");
       console.error("Error filtering data:", e);
     }
+  };
+
+  const handleFilter = async () => {
+    await filterDataBasedOnCriteria(currentPage, rowsPerPage);
+    setIsFilterActive(true);
   };
 
   const resetFilters = () => {
@@ -265,11 +241,137 @@ const Timesheet = () => {
     setToDate("");
     setSearchWithID("");
     setSearchWithName("");
-    setReportStatus("");
-    setFilteredData([]);
-    setSelectedEmployee("");
+    setReportStatus([]);
     setIsFilterActive(false);
+    setFilteredData([]);
   };
+
+  /* pagination */
+  const [currentPage, setCurrentPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleRowsPerPageChange = (event) => {
+    setRowsPerPage(parseInt(event.target.value));
+    setCurrentPage(0); // Reset to page 0 when changing rows per page
+  };
+
+  const handleCurrentPageChange = (direction) => {
+    setCurrentPage((prevPage) =>
+      direction === "next" ? prevPage + 1 : prevPage - 1
+    );
+  };
+
+  /* time sheet data */
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [totalPages, setTotalPages] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(true);
+
+  const getDateData = async () => {
+    const today = new Date();
+
+    const start = new Date();
+
+    start.setDate(today.getDate() - 30);
+
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    setStartDate(formatDate(start));
+    setEndDate(formatDate(today));
+  };
+
+  useEffect(() => {
+    getDateData();
+  }, []);
+
+  const fetchTimeSheetData = async (
+    startDate,
+    endDate,
+    currentPage,
+    rowsPerPage
+  ) => {
+    const request = {
+      managerUniqueId: ID,
+      startDate: "2024-06-01",
+      endDate: "2024-09-30",
+      pageNumber: currentPage,
+      size: rowsPerPage,
+    };
+    console.log("request:", request);
+    try {
+      const res = await axios.post(
+        "http://localhost:8080/api/payrollEmployee/filterData",
+        request
+      );
+      console.log("calling fetchTimeSheetData");
+      const data = res.data.content;
+      setTotalPages(res.data.totalPages - 1);
+      return {
+        data,
+        hasNextPage: res.data.content.length === rowsPerPage,
+      };
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      throw new Error("Failed to fetch data");
+    }
+  };
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: [
+      "timeSheetData",
+      ID,
+      startDate,
+      endDate,
+      currentPage,
+      rowsPerPage,
+      isFilterActive,
+      ...reportStatus,
+    ],
+    queryFn: async () => {
+      const { data, hasNextPage } = await fetchTimeSheetData(
+        startDate,
+        endDate,
+        currentPage,
+        rowsPerPage
+      );
+      setHasNextPage(hasNextPage);
+      return data;
+    },
+  });
+
+  /* sort timesheet */
+  const sortTimeSheets = (response) => {
+    if (!response || response.length === 0) {
+      return response;
+    }
+
+    return response.map((record) => {
+      if (record.timeSheetList) {
+        return {
+          ...record,
+          timeSheetList: record.timeSheetList.sort((a, b) => {
+            if (a.submittedTimestamp === null && b.submittedTimestamp !== null)
+              return 1;
+            if (a.submittedTimestamp !== null && b.submittedTimestamp === null)
+              return -1;
+            if (a.submittedTimestamp === null && b.submittedTimestamp === null)
+              return 0;
+            return (
+              new Date(b.submittedTimestamp) - new Date(a.submittedTimestamp)
+            );
+          }),
+        };
+      }
+      return record;
+    });
+  };
+
+  const sortedRecords = sortTimeSheets(data);
 
   const dataToRender = isFilterActive ? filteredData : sortedRecords;
 
@@ -308,7 +410,7 @@ const Timesheet = () => {
           </form>
         </motion.div>
       )}
-      <div className="m-3 p-4">
+      <div className="p-6">
         {isLoading ? (
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
             Loading...
@@ -319,19 +421,19 @@ const Timesheet = () => {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-10">
               <div className="flex gap-4">
                 <input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="border border-gray-300 outline-none text-[12px] rounded p-1 cursor-pointer date-input"
+                  className="border border-gray-300 outline-none text-[14px] rounded p-1 cursor-pointer date-input"
                 />
                 <input
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="border border-gray-300 outline-none text-[12px] rounded p-1 cursor-pointer date-input"
+                  className="border border-gray-300 outline-none text-[14px] rounded p-1 cursor-pointer date-input"
                 />
               </div>
               <div>
@@ -340,42 +442,40 @@ const Timesheet = () => {
                   placeholder="Search by employee ID"
                   value={searchWithID}
                   onChange={(e) => setSearchWithID(e.target.value)}
-                  className="outline-none border border-gray-300 text-[12px] rounded p-1 "
+                  className="outline-none border border-gray-300 text-[14px] rounded p-1 "
                 />
-              </div>
-              <div>
-                <select
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                  className="outline-none border border-gray-300 text-[12px] rounded p-1 cursor-pointer"
-                >
-                  <option value="" disabled>
-                    Select an employee
-                  </option>
-                  {employees.map((employee) => (
-                    <option key={employee.value} value={employee.value}>
-                      {employee.label}
-                    </option>
-                  ))}
-                </select>
               </div>
               <div>
                 <input
                   type="text"
-                  placeholder="Search by report status"
-                  value={reportStatus}
-                  onChange={(e) => setReportStatus(e.target.value)}
-                  className="outline-none border border-gray-300 text-[12px] rounded p-1 "
+                  value={searchWithName}
+                  onChange={handleChange}
+                  className="border border-gray-300 outline-none text-[14px] rounded p-1"
+                  placeholder="Search by employee name"
                 />
+                {showDropdown && (
+                  <div className="absolute border border-gray-300 bg-white shadow-lg mt-1 w-[170px] max-h-60 overflow-auto">
+                    {filteredEmployees.length > 0 ? (
+                      filteredEmployees.map((name, index) => (
+                        <div
+                          key={index}
+                          className="p-2 cursor-pointer hover:bg-gray-200"
+                          onClick={() => handleSelect(name)}
+                        >
+                          {name}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-2">No results found</div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex gap-5">
                 <button
                   style={{ color: colors.primary }}
                   className="bg-white font-normal py-1 px-8 rounded shadow focus:outline-none"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    filterDataBasedOnCriteria();
-                  }}
+                  onClick={handleFilter}
                 >
                   Filter
                 </button>
@@ -391,16 +491,40 @@ const Timesheet = () => {
                 </button>
               </div>
             </div>
-            <div style={{ maxHeight: "280px", overflowY: "auto" }}>
-              <table className="my-auto w-full rounded mt-5  ">
+            <div className="flex flex-col gap-2">
+              <span className="text-[12px] pt-2 italic">Report status</span>
+              <div className="flex gap-5">
+                <button
+                  style={getButtonStyle("APPROVED")}
+                  className="text-sm py-1 px-5 rounded-2xl shadow focus:outline-none"
+                  onClick={() => handleReportStatusChange("APPROVED")}
+                >
+                  APPROVED
+                </button>
+                <button
+                  style={getButtonStyle("REJECTED")}
+                  className="text-sm py-1 px-5 rounded-2xl shadow focus:outline-none"
+                  onClick={() => handleReportStatusChange("REJECTED")}
+                >
+                  REJECTED
+                </button>
+                <button
+                  style={getButtonStyle("PENDING")}
+                  className="text-sm py-1 px-5 rounded-2xl shadow focus:outline-none"
+                  onClick={() => handleReportStatusChange("PENDING")}
+                >
+                  PENDING
+                </button>
+              </div>
+            </div>
+            <div>
+              <table className="my-auto w-full rounded mt-5   ">
                 <thead
                   className="text-white"
                   style={{ background: colors.primary }}
                 >
                   <tr>
-                    <th className="border-none p-2 text-sm font-bold">
-                      <input type="checkbox" />
-                    </th>
+                    <th className="border-none p-2 text-sm font-bold"></th>
                     <th className="p-2 text-[12px] uppercase  whitespace-nowrap">
                       Employee ID
                     </th>
@@ -432,121 +556,96 @@ const Timesheet = () => {
                 </thead>
                 <tbody>
                   {dataToRender.length > 0 ? (
-                    dataToRender.flatMap((item) =>
-                      item.timeSheetList && item.timeSheetList.length > 0
-                        ? item.timeSheetList.map((timeSheet) => (
-                            <tr
-                              key={`${item.employeeUniqueId}-${timeSheet.timeSheetId}`}
-                              style={{
-                                background:
-                                  item.timeSheetList.indexOf(timeSheet) % 2 ===
-                                  0
-                                    ? ""
-                                    : `rgba(${hexToRgb(colors.primary)}, 0.1)`,
-                              }}
-                            >
-                              <td className="text-sm">
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked(timeSheet.timeSheetId)}
-                                  onChange={() => {
-                                    if (timeSheet.status === "PENDING") {
-                                      handleCheckboxChange(timeSheet);
-                                    }
-                                  }}
-                                  className="ml-1"
-                                  style={{
-                                    height: "17px",
-                                    width: "17px",
-                                    backgroundColor:
-                                      timeSheet.status === "PENDING"
-                                        ? "initial"
-                                        : "#d3d3d3",
-                                    cursor:
-                                      timeSheet.status === "PENDING"
-                                        ? "pointer"
-                                        : "not-allowed",
-                                  }}
-                                  disabled={timeSheet.status !== "PENDING"}
-                                />
-                              </td>
-                              <td
-                                className="p-2 text-sm"
-                                style={{ textAlign: "center" }}
-                              >
-                                {item.employeeUniqueId}
-                              </td>
-                              <td
-                                className="p-2 text-sm"
-                                style={{ textAlign: "center" }}
-                              >
-                                {item.lastName} {item.firstName}
-                              </td>
-                              <td
-                                className="p-2 text-sm"
-                                style={{ textAlign: "center" }}
-                              >
-                                {timeSheet.timeSheetId}
-                              </td>
-                              <td
-                                className="p-2 text-[12px]"
-                                style={{ textAlign: "center" }}
-                              >
-                                {timeSheet.fromDate}
-                              </td>
-                              <td
-                                className="p-2 text-[12px]"
-                                style={{ textAlign: "center" }}
-                              >
-                                {timeSheet.toDate}
-                              </td>
-                              <td
-                                className="p-2 text-sm"
-                                style={{ textAlign: "center" }}
-                              >
-                                {timeSheet.assignedDefaultHours}
-                              </td>
-                              <td
-                                className="p-2 text-sm"
-                                style={{ textAlign: "center" }}
-                              >
-                                {timeSheet.totalWorkedHours}
-                              </td>
-                              <td
-                                className="p-2 text-sm"
-                                style={{ textAlign: "center" }}
-                              >
-                                {timeSheet.overTimeWorkedHours}
-                              </td>
-                              <td
-                                className="p-4 text-sm flex justify-center items-center"
-                                style={{ textAlign: "center" }}
-                              >
-                                {timeSheet.status === "APPROVED" && (
-                                  <span className="font-medium text-green-600">
-                                    APPROVED
-                                  </span>
-                                )}
-                                {timeSheet.status === "REJECTED" && (
-                                  <span className="font-medium text-red-500">
-                                    REJECTED
-                                  </span>
-                                )}
-                                {timeSheet.status === "PENDING" && (
-                                  <span className="font-medium text-orange-400">
-                                    PENDING
-                                  </span>
-                                )}
-                                {timeSheet.status === "DRAFT" && (
-                                  <span className="font-medium text-blue-700">
-                                    DRAFT
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          ))
-                        : null
-                    )
+                    dataToRender.map((timeSheet) => (
+                      <tr
+                        key={timeSheet.timeSheetId}
+                        style={{
+                          background:
+                            dataToRender.indexOf(timeSheet) % 2 === 0
+                              ? ""
+                              : `rgba(${hexToRgb(colors.primary)}, 0.1)`,
+                        }}
+                      >
+                        <td className="text-sm">
+                          <input
+                            type="checkbox"
+                            checked={isChecked(timeSheet.timeSheetId)}
+                            onChange={() => {
+                              if (timeSheet.status === "PENDING") {
+                                handleCheckboxChange(timeSheet);
+                              }
+                            }}
+                            className="ml-1 p-2"
+                            style={{
+                              backgroundColor:
+                                timeSheet.status === "PENDING"
+                                  ? "initial"
+                                  : "#d3d3d3",
+                              cursor:
+                                timeSheet.status === "PENDING"
+                                  ? "pointer"
+                                  : "not-allowed",
+                            }}
+                            disabled={timeSheet.status !== "PENDING"}
+                          />
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.employeeUniqueId}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.lastName} {timeSheet.firstName}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.timeSheetId}
+                        </td>
+                        <td
+                          className="text-[12px]"
+                          style={{ textAlign: "center" }}
+                        >
+                          {timeSheet.startDate}
+                        </td>
+                        <td
+                          className="text-[12px]"
+                          style={{ textAlign: "center" }}
+                        >
+                          {timeSheet.endDate}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.assignedDefaultHours}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.totalWorkedHours}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.overTimeWorkedHours}
+                        </td>
+                        <td
+                          className="p-2 text-sm flex justify-center items-center"
+                          style={{ textAlign: "center" }}
+                        >
+                          {timeSheet.status === "APPROVED" && (
+                            <span className="font-sm text-sm text-green-600">
+                              APPROVED
+                            </span>
+                          )}
+                          {timeSheet.status === "REJECTED" && (
+                            <span className="font-sm text-sm text-red-500">
+                              REJECTED
+                            </span>
+                          )}
+                          {timeSheet.status === "PENDING" && (
+                            <span className="font-sm text-sm text-orange-400">
+                              PENDING
+                            </span>
+                          )}
+                          {timeSheet.status === "DRAFT" && (
+                            <span className="font-sm text-sm text-blue-700">
+                              DRAFT
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
                   ) : (
                     <tr>
                       <td colSpan="11" className="text-center">
@@ -557,29 +656,74 @@ const Timesheet = () => {
                 </tbody>
               </table>
             </div>
-            <div className="p-4 bg-white flex justify-end items-center">
-              <button
-                onClick={handleApprove}
-                className={`px-4 py-2  mr-4 ${
-                  areButtonsDisabled
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-green-500 text-white"
-                }`}
-                disabled={areButtonsDisabled}
-              >
-                Approve
-              </button>
-              <button
-                onClick={handleRejectionButtonClick}
-                className={`px-4 py-2  ${
-                  areButtonsDisabled
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-red-500 text-white"
-                }`}
-                disabled={areButtonsDisabled}
-              >
-                Reject
-              </button>
+            <div className="flex justify-between flex-row-reverse">
+              <div className="p-4 bg-white flex justify-end items-center">
+                <button
+                  onClick={handleApprove}
+                  className={`px-4 py-2  mr-4 ${
+                    areButtonsDisabled
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-green-500 text-white"
+                  }`}
+                  disabled={areButtonsDisabled}
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={handleRejectionButtonClick}
+                  className={`px-4 py-2  ${
+                    areButtonsDisabled
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-red-500 text-white"
+                  }`}
+                  disabled={areButtonsDisabled}
+                >
+                  Reject
+                </button>
+              </div>
+              <div className="flex items-center gap-60">
+                <div>
+                  <span className="text-sm text-gray-400 p-2">
+                    Rows Per Page
+                  </span>
+                  <select
+                    value={rowsPerPage}
+                    onChange={handleRowsPerPageChange}
+                    className="outline-none py-2 px-5"
+                  >
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                  </select>
+                </div>
+                <div className="flex gap-6">
+                  <button
+                    className="cursor-pointer flex items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleCurrentPageChange("previous");
+                    }}
+                    disabled={currentPage === 0}
+                  >
+                    <GrPrevious className="text-gray-500 text-sm" />
+                    <GrPrevious className="text-gray-500 text-sm" />
+                  </button>
+                  <span>
+                    <span className="text-sm">Page</span> {currentPage + 1} of{" "}
+                    {totalPages + 1}
+                  </span>
+                  <button
+                    className="cursor-pointer flex items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleCurrentPageChange("next");
+                    }}
+                    disabled={!hasNextPage}
+                  >
+                    <GrNext className="text-gray-500 text-sm" />{" "}
+                    <GrNext className="text-gray-500 text-sm" />
+                  </button>
+                </div>
+              </div>
             </div>
           </>
         )}
