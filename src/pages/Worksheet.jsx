@@ -48,11 +48,8 @@ const Worksheet = () => {
   });
 
   const handleRowClick = (sheet) => {
-    console.log("timesheeetID:", sheet.timeSheetId);
-    console.log("startDate:", sheet.fromDate);
-    console.log("toDate:", sheet.toDate);
     navigate(
-      `/table?timesheetId=${sheet.timeSheetId}&startDate=${sheet.fromDate}&endDate=${sheet.toDate}`
+      `/table?timesheetId=${sheet.timeSheetId}&startDate=${sheet.startDate}&endDate=${sheet.endDate}`
     );
   };
 
@@ -172,10 +169,10 @@ const Worksheet = () => {
                       {sheet.timeSheetId}
                     </td>
                     <td className="p-2 text-sm" style={{ textAlign: "center" }}>
-                      {sheet.fromDate}
+                      {sheet.startDate}
                     </td>
                     <td className="p-2 text-sm" style={{ textAlign: "center" }}>
-                      {sheet.toDate}
+                      {sheet.endDate}
                     </td>
                     <td className="p-2 text-sm" style={{ textAlign: "center" }}>
                       {sheet.assignedDefaultHours}

@@ -213,10 +213,10 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                   {val.status}
                 </td>
                 <td className="p-2 text-sm text-gray-700 text-center">
-                  {val.fromDate}
+                  {val.startDate}
                 </td>
                 <td className="p-2 text-sm text-gray-700 text-center">
-                  {val.toDate}
+                  {val.endDate}
                 </td>
                 <td className="p-2 text-sm text-gray-700 text-center">
                   {val.assignedDefaultHours}
@@ -467,9 +467,9 @@ const EditCard = ({ data, fetchSelectedEmployeeData }) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [workeHour, setWorkHour] = useState(data.assignedDefaultHours);
-  const [startDate, setStartDate] = useState(data.fromDate);
+  const [startDate, setStartDate] = useState(data.startDate);
   // eslint-disable-next-line no-unused-vars
-  const [endDate, setEndDate] = useState(data.toDate);
+  const [endDate, setEndDate] = useState(data.endDate);
   const isDisable =
     data.status === "PENDING"
       ? true
