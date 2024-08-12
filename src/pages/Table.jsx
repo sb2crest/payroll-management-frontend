@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -129,15 +130,6 @@ const TimesheetTable = () => {
   };
 
   const { colors } = useTheme();
-
-  const hexToRgb = (hex) => {
-    hex = hex.replace(/^#/, "");
-    let bigint = parseInt(hex, 16);
-    let r = (bigint >> 16) & 255;
-    let g = (bigint >> 8) & 255;
-    let b = bigint & 255;
-    return `${r}, ${g}, ${b}`;
-  };
 
   return (
     <div className="flex justify-center items-center m-10">
