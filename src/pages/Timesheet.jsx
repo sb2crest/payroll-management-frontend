@@ -63,9 +63,7 @@ const Timesheet = () => {
 
     try {
       const res = await handleApproved(submissions);
-      if (isFilterActive) {
-        filterDataBasedOnCriteria(currentPage, rowsPerPage);
-      }
+      console.log("isfilteractivated:", isFilterActive);
       await refetch();
     } catch (error) {
       console.error("Error approving timesheets:", error);
@@ -90,9 +88,6 @@ const Timesheet = () => {
     try {
       const res = await rejectTimesheet(submissions);
       await refetch();
-      if (isFilterActive) {
-        filterDataBasedOnCriteria();
-      }
     } catch (error) {
       console.error("Error rejecting timesheets:", error);
     } finally {
@@ -133,10 +128,14 @@ const Timesheet = () => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
 
   const listAllEmployees = async () => {
-    if (!searchWithName.trim() || /[^a-zA-Z0-9\s]/.test(searchWithName)) {
+    if (
+      searchWithName.trim().length < 3 ||
+      /[^a-zA-Z0-9\s]/.test(searchWithName)
+    ) {
       setFilteredEmployees([]);
       return;
     }
+
     try {
       const res = await axios.get(
         `http://localhost:8080/api/payrollEmployee/filterEmployeesByName?managerUniqueId=${ID}&employeeName=${searchWithName}`
@@ -154,20 +153,41 @@ const Timesheet = () => {
   }, [searchWithName]);
 
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isSearchTermLongEnough, setIsSearchTermLongEnough] = useState(false);
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+
+  const handleFocus = () => {
+    if (searchWithName.length < 3) {
+      setIsTooltipVisible(true);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsTooltipVisible(false);
+  };
 
   const handleChange = (e) => {
     const value = e.target.value;
     setSearchWithName(value);
-    if (value.trim() === "") {
-      setShowDropdown(false);
-    } else {
+    if (value.trim().length >= 3) {
+      setIsSearchTermLongEnough(true);
       setShowDropdown(true);
+    } else {
+      setIsSearchTermLongEnough(false);
+      setShowDropdown(false);
     }
   };
 
   const handleSelect = (name) => {
     setSearchWithName(name);
     setShowDropdown(false);
+  };
+
+  const handleChangeWithTooltip = (event) => {
+    handleChange(event);
+    if (event.target.value.length >= 3) {
+      setIsTooltipVisible(false);
+    }
   };
 
   const highlightText = (text, searchTerm) => {
@@ -222,6 +242,7 @@ const Timesheet = () => {
 
   const filterDataBasedOnCriteria = async (currentPage, rowsPerPage) => {
     try {
+      console.log("calling filterDataBasedOnCriteria");
       const payload = {
         managerUniqueId: ID || null,
         employeeUniqueId: searchWithID || null,
@@ -238,19 +259,32 @@ const Timesheet = () => {
       );
       const data = res.data;
       setFilteredData(data.content);
-      setTotalPages(data.totalPages); 
-      setHasNextPage(data.content.length === rowsPerPage); 
+      setTotalPages(data.totalPages);
+      setHasNextPage(data.content.length === rowsPerPage);
       setIsFilterActive(true);
     } catch (e) {
-      toast.error("No match found");
+      if (isFilterActive) {
+        toast.error("No match found");
+      }
       console.error("Error filtering data:", e);
       setHasNextPage(false);
     }
   };
 
   const handleFilter = async () => {
-    await filterDataBasedOnCriteria(currentPage, rowsPerPage);
-    setIsFilterActive(true);
+    if (
+      fromDate ||
+      toDate ||
+      searchWithID ||
+      searchWithName ||
+      reportStatus.length > 0
+    ) {
+      await filterDataBasedOnCriteria(currentPage, rowsPerPage);
+      setIsFilterActive(true);
+    } else {
+      resetFilters();
+      setIsFilterActive(false);
+    }
   };
 
   const resetFilters = () => {
@@ -393,7 +427,15 @@ const Timesheet = () => {
 
   const sortedRecords = sortTimeSheets(data);
 
-  const dataToRender = isFilterActive ? filteredData : sortedRecords;
+  const sortBySubmittedTimestamp = (data) => {
+    return data.sort(
+      (a, b) => new Date(b.submittedTimestamp) - new Date(a.submittedTimestamp)
+    );
+  };
+
+  const dataToRender = isFilterActive
+    ? sortBySubmittedTimestamp(filteredData)
+    : sortedRecords;
 
   useEffect(() => {
     if (isFilterActive) {
@@ -475,13 +517,20 @@ const Timesheet = () => {
                 <input
                   type="text"
                   value={searchWithName}
-                  onChange={handleChange}
+                  onChange={handleChangeWithTooltip}
                   className="border border-gray-300 outline-none text-[14px] rounded p-1"
                   placeholder="Search by employee name"
+                  onFocus={handleFocus} // Show tooltip when input is focused
+                  onBlur={handleBlur}
                 />
+                {isTooltipVisible && searchWithName.length < 3 && (
+                  <div className="absolute text-gray-500 italic text-xs p-1">
+                    Please enter three characters
+                  </div>
+                )}
                 {showDropdown && (
                   <div className="absolute border border-gray-300 bg-white shadow-lg mt-1 w-[170px] max-h-60 overflow-auto">
-                    {filteredEmployees.length > 0 ? (
+                    {isSearchTermLongEnough && filteredEmployees.length > 0 ? (
                       filteredEmployees.map((name, index) => (
                         <div
                           key={index}
@@ -492,9 +541,9 @@ const Timesheet = () => {
                           }}
                         />
                       ))
-                    ) : (
+                    ) : isSearchTermLongEnough ? (
                       <div className="p-2">No results found</div>
-                    )}
+                    ) : null}
                   </div>
                 )}
               </div>
@@ -620,7 +669,7 @@ const Timesheet = () => {
                           {timeSheet.employeeUniqueId}
                         </td>
                         <td className="text-sm" style={{ textAlign: "center" }}>
-                          {timeSheet.lastName} {timeSheet.firstName}
+                          {timeSheet.firstName} {timeSheet.lastName}
                         </td>
                         <td className="text-sm" style={{ textAlign: "center" }}>
                           {timeSheet.timeSheetId}
@@ -719,7 +768,8 @@ const Timesheet = () => {
                     className="outline-none py-2 px-5"
                   >
                     <option value="5">5</option>
-                    <option value="6">6</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
                   </select>
                 </div>
                 <div className="flex gap-6">
