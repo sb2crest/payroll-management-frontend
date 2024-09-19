@@ -1,102 +1,451 @@
-import { useState, useEffect } from "react";
-import { CiSearch } from "react-icons/ci";
+/* eslint-disable no-unused-vars */
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useTheme } from "../context/theme-context";
 import { motion } from "framer-motion";
-import { handleReject as rejectTimesheet } from "../helpers/theme-api";
+import {
+  handleApproved,
+  handleReject as rejectTimesheet,
+} from "../helpers/theme-api";
 import { useAuth } from "../context/auth-context";
-
-const fetchTimeSheetData = async (id) => {
-  try {
-    const res = await axios.get(
-      `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=${id}`
-    );
-    console.log("Fetched Data:", res.data);
-    return res.data;
-  } catch (error) {
-    console.error("Failed to fetch data", error);
-    throw new Error("Failed to fetch data");
-  }
-};
+import "react-datepicker/dist/react-datepicker.css";
+import toast from "react-hot-toast";
+import "./custom.css";
+import { GrPrevious } from "react-icons/gr";
+import { GrNext } from "react-icons/gr";
 
 const Timesheet = () => {
+  /* destructuring for ID and theme */
   const { ID } = useAuth();
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["timeSheetData", ID],
-    queryFn: () => fetchTimeSheetData(ID),
-  });
-
-  const [filteredData, setFilteredData] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize, setPageSize] = useState(2);
-
   const { colors } = useTheme();
 
-  const handleApprove = async (weeklySubmissionId) => {
-    console.log(weeklySubmissionId);
-    await handleApproved(weeklySubmissionId);
-    refetch();
+  /* selecting multiple records */
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  const handleCheckboxChange = (timeSheet) => {
+    setSelectedRows((prevSelected) => {
+      const isSelected = prevSelected.some(
+        (row) => row.timeSheetId === timeSheet.timeSheetId
+      );
+      const newSelectedRows = isSelected
+        ? prevSelected.filter(
+            (row) => row.timeSheetId !== timeSheet.timeSheetId
+          )
+        : [...prevSelected, timeSheet];
+      return newSelectedRows;
+    });
   };
 
+  const isChecked = (timeSheetId) =>
+    selectedRows.some((row) => row.timeSheetId === timeSheetId);
+
+  /* rejection form */
   const [open, setOpen] = useState(false);
-  const [id, setId] = useState("");
   const [reason, setReason] = useState("");
 
-  const handleOpen = async (weeklySubmissionId) => {
-    setId(weeklySubmissionId);
-    setOpen(true);
+  const handleRejectionButtonClick = () => {
+    setOpen(true); // Open the form
   };
 
-  const handleReject = async (e) => {
+  /* approval */
+  const handleApprove = async () => {
+    if (!selectedRows.length) {
+      console.warn("No rows selected to approve.");
+      return;
+    }
+
+    const submissions = selectedRows.map((row) => ({
+      weeklySubmissionId: row.timeSheetId,
+      message: "Report Approvedddd",
+      reportStatus: "APPROVED",
+    }));
+
+    try {
+      const res = await handleApproved(submissions);
+      console.log("isfilteractivated:", isFilterActive);
+      await refetch();
+    } catch (error) {
+      console.error("Error approving timesheets:", error);
+    } finally {
+      setSelectedRows([]);
+    }
+  };
+
+  /* rejection */
+  const handleRejectionFormSubmit = async () => {
+    if (!selectedRows.length) {
+      console.warn("No rows selected to reject.");
+      return;
+    }
+
+    const submissions = selectedRows.map((row) => ({
+      weeklySubmissionId: row.timeSheetId,
+      message: reason,
+      reportStatus: "REJECTED",
+    }));
+
+    try {
+      const res = await rejectTimesheet(submissions);
+      await refetch();
+    } catch (error) {
+      console.error("Error rejecting timesheets:", error);
+    } finally {
+      setSelectedRows([]);
+      setOpen(false);
+      setReason("");
+    }
+  };
+
+  /* form submission */
+  const submitDefault = async (e) => {
     e.preventDefault();
-    await rejectTimesheet(id, reason);
-    setReason("");
-    setOpen(false);
-    refetch();
+    await handleRejectionFormSubmit();
+  };
+
+  /* style and functionality for buttons before and after selecting rows */
+  const areButtonsDisabled = selectedRows.length === 0;
+
+  /* style for table */
+  const hexToRgb = (hex) => {
+    hex = hex.replace(/^#/, "");
+    let bigint = parseInt(hex, 16);
+    let r = (bigint >> 16) & 255;
+    let g = (bigint >> 8) & 255;
+    let b = bigint & 255;
+    return `${r}, ${g}, ${b}`;
+  };
+
+  /* filters */
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [searchWithID, setSearchWithID] = useState("");
+  const [searchWithName, setSearchWithName] = useState("");
+  const [reportStatus, setReportStatus] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [isFilterActive, setIsFilterActive] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+
+  const listAllEmployees = async () => {
+    if (
+      searchWithName.trim().length < 3 ||
+      /[^a-zA-Z0-9\s]/.test(searchWithName)
+    ) {
+      setFilteredEmployees([]);
+      return;
+    }
+
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/payrollEmployee/filterEmployeesByName?managerUniqueId=${ID}&employeeName=${searchWithName}`
+      );
+      const data = res.data;
+      setFilteredEmployees(data);
+      console.log("feching employee list:", data);
+    } catch (e) {
+      console.error("Error fetching employees:", e);
+    }
   };
 
   useEffect(() => {
-    if (data && Array.isArray(data)) {
-      console.log("Data in useEffect:", data); // Debugging statement
-      setFilteredData(
-        data.filter((item) => {
-          const employeeId = item.employeeUniqueId?.toLowerCase() || "";
-          const firstName = item.firstName?.toLowerCase() || "";
-          const lastName = item.lastName?.toLowerCase() || "";
-          return (
-            employeeId.includes(searchTerm.toLowerCase()) ||
-            firstName.includes(searchTerm.toLowerCase()) ||
-            lastName.includes(searchTerm.toLowerCase())
-          );
-        })
-      );
+    listAllEmployees();
+  }, [searchWithName]);
+
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isSearchTermLongEnough, setIsSearchTermLongEnough] = useState(false);
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+
+  const handleFocus = () => {
+    if (searchWithName.length < 3) {
+      setIsTooltipVisible(true);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsTooltipVisible(false);
+  };
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setSearchWithName(value);
+    if (value.trim().length >= 3) {
+      setIsSearchTermLongEnough(true);
+      setShowDropdown(true);
     } else {
-      console.error("Unexpected data format:", data);
-      setFilteredData([]);
-    }
-  }, [searchTerm, data]);
-
-  const handlePageSizeChange = (e) => {
-    setPageSize(Number(e.target.value));
-    setCurrentPage(0); // Reset to first page when changing page size
-  };
-
-  const handlePageChange = (page) => {
-    if (page >= 0 && page < Math.ceil(filteredData.length / pageSize)) {
-      setCurrentPage(page);
+      setIsSearchTermLongEnough(false);
+      setShowDropdown(false);
     }
   };
 
-  const pages = Math.ceil(filteredData.length / pageSize);
-  const currentPageData = filteredData.slice(
-    currentPage * pageSize,
-    currentPage * pageSize + pageSize
-  );
+  const handleSelect = (name) => {
+    setSearchWithName(name);
+    setShowDropdown(false);
+  };
+
+  const handleChangeWithTooltip = (event) => {
+    handleChange(event);
+    if (event.target.value.length >= 3) {
+      setIsTooltipVisible(false);
+    }
+  };
+
+  const highlightText = (text, searchTerm) => {
+    if (!searchTerm.trim()) return text;
+    const regex = new RegExp(`(${searchTerm})`, "gi");
+    return text.replace(
+      regex,
+      (match) => `<span class="bg-yellow-200">${match}</span>`
+    );
+  };
+
+  const handleReportStatusChange = (status) => {
+    if (reportStatus.includes(status)) {
+      setReportStatus((prevStatus) => prevStatus.filter((s) => s !== status));
+      if (selectedStatus === status) {
+        setSelectedStatus(null);
+      }
+    } else {
+      setReportStatus((prevStatus) => [...prevStatus, status]);
+      setSelectedStatus(status);
+    }
+  };
+
+  const getButtonStyle = (status) => {
+    const defaultStyle = {
+      backgroundColor: "#eeeeee",
+      color: "gray",
+    };
+
+    // Define the styles for each status
+    const statusStyles = {
+      APPROVED: {
+        backgroundColor: "#90EE90",
+        color: "#008000",
+      },
+      REJECTED: {
+        backgroundColor: "#FAA0A0",
+        color: "#FF0000",
+      },
+      PENDING: {
+        backgroundColor: "#FAD5A5",
+        color: "#FFA500",
+      },
+    };
+
+    const isSelected = reportStatus.includes(status);
+
+    return isSelected ? statusStyles[status] : defaultStyle;
+  };
+
+  const [hasNextPage, setHasNextPage] = useState(true);
+
+  const filterDataBasedOnCriteria = async (currentPage, rowsPerPage) => {
+    try {
+      console.log("calling filterDataBasedOnCriteria");
+      const payload = {
+        managerUniqueId: ID || null,
+        employeeUniqueId: searchWithID || null,
+        employeeName: searchWithName || null,
+        reportStatus: reportStatus,
+        startDate: fromDate || null,
+        endDate: toDate || null,
+        pageNumber: currentPage,
+        pageSize: rowsPerPage,
+      };
+      const res = await axios.post(
+        `http://localhost:8080/api/payrollEmployee/filterDataBasedOnCriteria`,
+        payload
+      );
+      const data = res.data;
+      setFilteredData(data.content);
+      setTotalPages(data.totalPages);
+      setHasNextPage(data.content.length === rowsPerPage);
+      setIsFilterActive(true);
+    } catch (e) {
+      if (isFilterActive) {
+        toast.error("No match found");
+      }
+      console.error("Error filtering data:", e);
+      setHasNextPage(false);
+    }
+  };
+
+  const handleFilter = async () => {
+    if (
+      fromDate ||
+      toDate ||
+      searchWithID ||
+      searchWithName ||
+      reportStatus.length > 0
+    ) {
+      await filterDataBasedOnCriteria(currentPage, rowsPerPage);
+      setIsFilterActive(true);
+    } else {
+      resetFilters();
+      setIsFilterActive(false);
+    }
+  };
+
+  const resetFilters = () => {
+    setFromDate("");
+    setToDate("");
+    setSearchWithID("");
+    setSearchWithName("");
+    setReportStatus([]);
+    setIsFilterActive(false);
+    setFilteredData([]);
+  };
+
+  /* pagination */
+  const [currentPage, setCurrentPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleRowsPerPageChange = (event) => {
+    setRowsPerPage(parseInt(event.target.value));
+    setCurrentPage(0);
+  };
+
+  const handleCurrentPageChange = (direction) => {
+    setCurrentPage((prevPage) =>
+      direction === "next" ? prevPage + 1 : prevPage - 1
+    );
+  };
+
+  /* time sheet data */
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [totalPages, setTotalPages] = useState(0);
+
+  const getDateData = async () => {
+    const today = new Date();
+
+    const start = new Date();
+
+    start.setDate(today.getDate() - 30);
+
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    setStartDate(formatDate(start));
+    setEndDate(formatDate(today));
+  };
+
+  useEffect(() => {
+    getDateData();
+  }, []);
+
+  const fetchTimeSheetData = async (
+    startDate,
+    endDate,
+    currentPage,
+    rowsPerPage
+  ) => {
+    const request = {
+      managerUniqueId: ID,
+      startDate: "2024-06-01",
+      endDate: "2024-09-30",
+      pageNumber: currentPage,
+      size: rowsPerPage,
+    };
+    try {
+      console.log("calling ");
+      const res = await axios.post(
+        "http://localhost:8080/api/payrollEmployee/filterData",
+        request
+      );
+      const data = res.data.content;
+      setTotalPages(res.data.totalPages);
+      return {
+        data,
+        hasNextPage: res.data.content.length === rowsPerPage,
+      };
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      throw new Error("Failed to fetch data");
+    }
+  };
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: [
+      "timeSheetData",
+      ID,
+      startDate,
+      endDate,
+      currentPage,
+      rowsPerPage,
+      isFilterActive,
+      ...reportStatus,
+    ],
+    queryFn: async () => {
+      if (isFilterActive) {
+        return filteredData;
+      } else {
+        const { data, hasNextPage } = await fetchTimeSheetData(
+          startDate,
+          endDate,
+          currentPage,
+          rowsPerPage
+        );
+        setHasNextPage(hasNextPage);
+        return data;
+      }
+    },
+    keepPreviousData: true,
+  });
+
+  /* sort timesheet */
+  const sortTimeSheets = (response) => {
+    if (!response || response.length === 0) {
+      return response;
+    }
+
+    return response.map((record) => {
+      if (record.timeSheetList) {
+        return {
+          ...record,
+          timeSheetList: record.timeSheetList.sort((a, b) => {
+            if (a.submittedTimestamp === null && b.submittedTimestamp !== null)
+              return 1;
+            if (a.submittedTimestamp !== null && b.submittedTimestamp === null)
+              return -1;
+            if (a.submittedTimestamp === null && b.submittedTimestamp === null)
+              return 0;
+            return (
+              new Date(b.submittedTimestamp) - new Date(a.submittedTimestamp)
+            );
+          }),
+        };
+      }
+      return record;
+    });
+  };
+
+  const sortedRecords = sortTimeSheets(data);
+
+  const sortBySubmittedTimestamp = (data) => {
+    return data.sort(
+      (a, b) => new Date(b.submittedTimestamp) - new Date(a.submittedTimestamp)
+    );
+  };
+
+  const dataToRender = isFilterActive
+    ? sortBySubmittedTimestamp(filteredData)
+    : sortedRecords;
+
+  useEffect(() => {
+    if (isFilterActive) {
+      filterDataBasedOnCriteria(currentPage, rowsPerPage);
+    }
+  }, [currentPage, rowsPerPage, isFilterActive]);
 
   return (
-    <div className="m-6 ">
+    <>
+      {" "}
       {open && (
         <motion.div
           initial={{ display: "none" }}
@@ -104,7 +453,7 @@ const Timesheet = () => {
           transition={{ duration: 0.3 }}
           className="border-[1px] w-[500px] p-4 z-[999999] h-[300px] flex items-center flex-col gap-6 justify-center absolute left-[50%] top-[50%] -translate-x-[50%] -translate-y-[50%] bg-gray-100 rounded-lg shadow-md"
         >
-          <form onSubmit={handleReject} className="w-full">
+          <form className="w-full" onSubmit={submitDefault}>
             <input
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -117,7 +466,7 @@ const Timesheet = () => {
                 onClick={() => setOpen(false)}
                 className="p-2 bg-gray-400 rounded-lg w-full"
               >
-                cancel
+                Cancel
               </button>
               <button
                 type="submit"
@@ -129,7 +478,7 @@ const Timesheet = () => {
           </form>
         </motion.div>
       )}
-      <div className="bg-white p-10 mt-6 rounded-lg shadow-md relative border-[1px]">
+      <div className="p-6">
         {isLoading ? (
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
             Loading...
@@ -140,181 +489,323 @@ const Timesheet = () => {
           </div>
         ) : (
           <>
-            <div
-              className="relative max-w-[400px] border-[1px] rounded-lg overflow-hidden"
-              style={{ borderColor: colors.accent }}
-            >
-              <button className="absolute top-1/2 left-2 transform -translate-y-1/2 border-none cursor-pointer rounded-l-lg">
-                <CiSearch />
-              </button>
-              <input
-                type="text"
-                className="py-2 text-sm outline-none pl-10 pr-4 bg-white w-full"
-                placeholder="Search by name or id"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <table
-              className="my-auto border-2 border-white bg-[#eee] w-full rounded-lg mt-5 overflow-hidden"
-              style={{ background: colors.globalBackgroundColor }}
-            >
-              <thead className="border-b-2 border-b-white">
-                <tr>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    Employee Id
-                  </th>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    Name
-                  </th>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    Start Date
-                  </th>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    End Date
-                  </th>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    Payment Mode
-                  </th>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    Default Hours
-                  </th>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    Overtime Hours
-                  </th>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    Total Hours
-                  </th>
-                  <th
-                    className="border-2 border-white p-2 text-sm"
-                    style={{ color: colors.secondary }}
-                  >
-                    Approval
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentPageData.map((item) => (
-                  <tr
-                    key={item.employeeUniqueId}
-                    className="border-2 border-white"
-                  >
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.employeeUniqueId}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {` ${item.firstName} ${item.lastName}`}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.startDate}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.endDate}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.paymentMode}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.defaultHours}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.overtimeHours}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm">
-                      {item.totalHours}
-                    </td>
-                    <td className="border-2 border-white p-2 text-sm flex gap-2">
-                      <button
-                        className="p-1 bg-green-500 rounded-lg text-white text-xs"
-                        onClick={() => handleApprove(item.weeklySubmissionId)}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        className="p-1 bg-red-500 rounded-lg text-white text-xs"
-                        onClick={() => handleOpen(item.weeklySubmissionId)}
-                      >
-                        Reject
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="flex justify-between items-center mt-4">
-              <div>
-                <label htmlFor="pageSize">Page Size:</label>
-                <select
-                  id="pageSize"
-                  value={pageSize}
-                  onChange={handlePageSizeChange}
-                  className="ml-2 border border-gray-300 rounded"
-                >
-                  {[2, 5, 10].map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
+            <div className="flex items-center gap-10">
+              <div className="flex gap-4">
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="border border-gray-300 outline-none text-[14px] rounded p-1 cursor-pointer date-input"
+                />
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="border border-gray-300 outline-none text-[14px] rounded p-1 cursor-pointer date-input"
+                />
               </div>
-              <div className="flex items-center gap-2">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Search by employee ID"
+                  value={searchWithID}
+                  onChange={(e) => setSearchWithID(e.target.value)}
+                  className="outline-none border border-gray-300 text-[14px] rounded p-1 "
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={searchWithName}
+                  onChange={handleChangeWithTooltip}
+                  className="border border-gray-300 outline-none text-[14px] rounded p-1"
+                  placeholder="Search by employee name"
+                  onFocus={handleFocus} // Show tooltip when input is focused
+                  onBlur={handleBlur}
+                />
+                {isTooltipVisible && searchWithName.length < 3 && (
+                  <div className="absolute text-gray-500 italic text-xs p-1">
+                    Please enter three characters
+                  </div>
+                )}
+                {showDropdown && (
+                  <div className="absolute border border-gray-300 bg-white shadow-lg mt-1 w-[170px] max-h-60 overflow-auto">
+                    {isSearchTermLongEnough && filteredEmployees.length > 0 ? (
+                      filteredEmployees.map((name, index) => (
+                        <div
+                          key={index}
+                          className="p-2 cursor-pointer hover:bg-gray-200"
+                          onClick={() => handleSelect(name)}
+                          dangerouslySetInnerHTML={{
+                            __html: highlightText(name, searchWithName),
+                          }}
+                        />
+                      ))
+                    ) : isSearchTermLongEnough ? (
+                      <div className="p-2">No results found</div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-5">
                 <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 0}
-                  className="p-1 bg-gray-200 rounded"
+                  style={{ color: colors.primary }}
+                  className="bg-white font-normal py-1 px-8 rounded shadow focus:outline-none"
+                  onClick={handleFilter}
                 >
-                  Prev
+                  Filter
                 </button>
-                {Array.from({ length: pages }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handlePageChange(i)}
-                    className={`p-1 ${
-                      currentPage === i
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200"
-                    } rounded`}
+                <button
+                  style={{ color: colors.primary }}
+                  className="bg-white font-normal py-1 px-8 rounded shadow focus:outline-none"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    resetFilters();
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-[12px] pt-2 italic">Report status</span>
+              <div className="flex gap-5">
+                <button
+                  style={getButtonStyle("APPROVED")}
+                  className="text-sm py-1 px-5 rounded-2xl shadow focus:outline-none"
+                  onClick={() => handleReportStatusChange("APPROVED")}
+                >
+                  APPROVED
+                </button>
+                <button
+                  style={getButtonStyle("REJECTED")}
+                  className="text-sm py-1 px-5 rounded-2xl shadow focus:outline-none"
+                  onClick={() => handleReportStatusChange("REJECTED")}
+                >
+                  REJECTED
+                </button>
+                <button
+                  style={getButtonStyle("PENDING")}
+                  className="text-sm py-1 px-5 rounded-2xl shadow focus:outline-none"
+                  onClick={() => handleReportStatusChange("PENDING")}
+                >
+                  PENDING
+                </button>
+              </div>
+            </div>
+            <div>
+              <table className="my-auto w-full rounded mt-5   ">
+                <thead
+                  className="text-white"
+                  style={{ background: colors.primary }}
+                >
+                  <tr>
+                    <th className="border-none p-2 text-sm font-bold"></th>
+                    <th className="p-2 text-[12px] uppercase  whitespace-nowrap">
+                      Employee ID
+                    </th>
+                    <th className="p-2 text-[12px] whitespace-nowrap uppercase">
+                      Employee Name
+                    </th>
+                    <th className="p-2 text-[12px] whitespace-nowrap uppercase">
+                      TimeSheet ID
+                    </th>
+                    <th className="p-2 text-[12px] whitespace-nowrap uppercase">
+                      Week Begin
+                    </th>
+                    <th className="p-2 text-[12px] whitespace-nowrap uppercase">
+                      Week Close
+                    </th>
+                    <th className="p-2 text-[12px] whitespace-nowrap uppercase">
+                      Default Hours
+                    </th>
+                    <th className="p-2 text-[12px] whitespace-nowrap uppercase">
+                      Total Hours
+                    </th>
+                    <th className="p-2 text-[12px] whitespace-nowrap uppercase">
+                      Overtime
+                    </th>
+                    <th className="p-2 text-[12px] whitespace-nowrap uppercase">
+                      Approval
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dataToRender.length > 0 ? (
+                    dataToRender.map((timeSheet) => (
+                      <tr
+                        key={timeSheet.timeSheetId}
+                        style={{
+                          background:
+                            dataToRender.indexOf(timeSheet) % 2 === 0
+                              ? ""
+                              : `rgba(${hexToRgb(colors.primary)}, 0.1)`,
+                        }}
+                      >
+                        <td className="text-sm">
+                          <input
+                            type="checkbox"
+                            checked={isChecked(timeSheet.timeSheetId)}
+                            onChange={() => {
+                              if (timeSheet.status === "PENDING") {
+                                handleCheckboxChange(timeSheet);
+                              }
+                            }}
+                            className="ml-1 p-2"
+                            style={{
+                              backgroundColor:
+                                timeSheet.status === "PENDING"
+                                  ? "initial"
+                                  : "#d3d3d3",
+                              cursor:
+                                timeSheet.status === "PENDING"
+                                  ? "pointer"
+                                  : "not-allowed",
+                            }}
+                            disabled={timeSheet.status !== "PENDING"}
+                          />
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.employeeUniqueId}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.firstName} {timeSheet.lastName}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.timeSheetId}
+                        </td>
+                        <td
+                          className="text-[12px]"
+                          style={{ textAlign: "center" }}
+                        >
+                          {timeSheet.startDate}
+                        </td>
+                        <td
+                          className="text-[12px]"
+                          style={{ textAlign: "center" }}
+                        >
+                          {timeSheet.endDate}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.assignedDefaultHours}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.totalWorkedHours}
+                        </td>
+                        <td className="text-sm" style={{ textAlign: "center" }}>
+                          {timeSheet.overTimeWorkedHours}
+                        </td>
+                        <td
+                          className="p-2 text-sm flex justify-center items-center"
+                          style={{ textAlign: "center" }}
+                        >
+                          {timeSheet.status === "APPROVED" && (
+                            <span className="font-sm text-sm text-green-600">
+                              APPROVED
+                            </span>
+                          )}
+                          {timeSheet.status === "REJECTED" && (
+                            <span className="font-sm text-sm text-red-500">
+                              REJECTED
+                            </span>
+                          )}
+                          {timeSheet.status === "PENDING" && (
+                            <span className="font-sm text-sm text-orange-400">
+                              PENDING
+                            </span>
+                          )}
+                          {timeSheet.status === "DRAFT" && (
+                            <span className="font-sm text-sm text-blue-700">
+                              DRAFT
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="11" className="text-center">
+                        No data available
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-between flex-row-reverse">
+              <div className="p-4 bg-white flex justify-end items-center">
+                <button
+                  onClick={handleApprove}
+                  className={`px-4 py-2  mr-4 ${
+                    areButtonsDisabled
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-green-500 text-white"
+                  }`}
+                  disabled={areButtonsDisabled}
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={handleRejectionButtonClick}
+                  className={`px-4 py-2  ${
+                    areButtonsDisabled
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-red-500 text-white"
+                  }`}
+                  disabled={areButtonsDisabled}
+                >
+                  Reject
+                </button>
+              </div>
+              <div className="flex items-center gap-60">
+                <div>
+                  <span className="text-sm text-gray-400 p-2">
+                    Rows Per Page
+                  </span>
+                  <select
+                    value={rowsPerPage}
+                    onChange={handleRowsPerPageChange}
+                    className="outline-none py-2 px-5"
                   >
-                    {i + 1}
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                  </select>
+                </div>
+                <div className="flex gap-6">
+                  <button
+                    className="cursor-pointer flex items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleCurrentPageChange("previous");
+                    }}
+                    disabled={currentPage === 0}
+                  >
+                    <GrPrevious className="text-gray-500 text-sm" />
+                    <GrPrevious className="text-gray-500 text-sm" />
                   </button>
-                ))}
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === pages - 1}
-                  className="p-1 bg-gray-200 rounded"
-                >
-                  Next
-                </button>
+                  <span>
+                    <span className="text-sm">Page</span> {currentPage + 1} of{" "}
+                    {totalPages}
+                  </span>
+                  <button
+                    className="cursor-pointer flex items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleCurrentPageChange("next");
+                    }}
+                    disabled={!hasNextPage}
+                  >
+                    <GrNext className="text-gray-500 text-sm" />{" "}
+                    <GrNext className="text-gray-500 text-sm" />
+                  </button>
+                </div>
               </div>
             </div>
           </>
         )}
       </div>
-    </div>
+    </>
   );
 };
 

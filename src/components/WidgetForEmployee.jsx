@@ -1,21 +1,21 @@
+import { IoIosArrowUp } from "react-icons/io";
 import { FaMoneyCheckAlt } from "react-icons/fa";
 import { MdMoreTime } from "react-icons/md";
 import { LuClipboardCheck } from "react-icons/lu";
-import { IoIosArrowUp } from "react-icons/io";
 
-const WidgetForManager = ({ type }) => {
+const WidgetForEmployee = ({ type }) => {
   let data;
 
   //temporary
-  const amount = 50000;
+  const amount = 5;
   const diff = 20;
 
   switch (type) {
-    case "payroll":
+    case "payroll-expense":
       data = {
-        title: "Payroll Summary",
+        title: "Payroll Expense",
         isMoney: true,
-        link: "See Comparison Report",
+        link: "View Detailed Report",
         icon: (
           <FaMoneyCheckAlt
             className="p-1 mt-10 w-9 h-9"
@@ -24,11 +24,11 @@ const WidgetForManager = ({ type }) => {
         ),
       };
       break;
-    case "employeeHours":
+    case "pending-payroll":
       data = {
-        title: "Employee Hours",
+        title: "Pending Payroll",
         isMoney: false,
-        link: "View Departmental Breakdown",
+        link: "Review Pending Approvals",
         icon: (
           <MdMoreTime
             className="p-1 mt-10 w-9 h-9"
@@ -37,12 +37,12 @@ const WidgetForManager = ({ type }) => {
         ),
       };
       break;
-    case "cost":
+    case "bonus":
       // eslint-disable-next-line no-unused-vars
       data = {
-        title: "Cost Distribution",
+        title: "Bonus Distribution",
         isMoney: true,
-        link: "See Departmental Allocation",
+        link: "View all the Bonus Details",
         icon: (
           <LuClipboardCheck
             className="p-1 mt-10 w-9 h-9"
@@ -54,13 +54,13 @@ const WidgetForManager = ({ type }) => {
     default:
       break;
   }
-  
+
   return (
     <div className="bg-white shadow-lg rounded p-4 flex items-center justify-between">
       <div className="flex flex-col justify-between">
         <span className="text-[#b4b5b5] text-md pt-3">{data.title}</span>
         <span className="text-2xl font-normal pt-3">
-          {amount} {data.isMoney ? "$" : "Hours"}
+          {amount} {data.isMoney ? "$" : "Requests"}
         </span>
         <span className="text-xs font-medium text-[#4D5664] border-b border-[#4D5664] pt-3 cursor-pointer">
           {data.link}
@@ -81,4 +81,4 @@ const WidgetForManager = ({ type }) => {
   );
 };
 
-export default WidgetForManager;
+export default WidgetForEmployee;

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import { useTheme } from "../context/theme-context";
 import toast from "react-hot-toast";
@@ -14,6 +15,7 @@ import { GoPlus } from "react-icons/go";
 import { useAuth } from "../context/auth-context";
 
 const AddHours = () => {
+  const { colors } = useTheme();
   const { ID } = useAuth();
 
   const [open, setOpen] = useState(true);
@@ -23,6 +25,8 @@ const AddHours = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [workingDays, setWorkingDays] = useState(0);
 
   const getAllEmployeesData = async () => {
     try {
@@ -31,6 +35,8 @@ const AddHours = () => {
       const data = await getAllEmployees(ID);
       if (data) {
         setData(data);
+        const days = data.map((emp) => emp.workingDays);
+        setWorkingDays(days);
       }
     } catch (error) {
       setError(true);
@@ -42,19 +48,26 @@ const AddHours = () => {
 
   useEffect(() => {
     getAllEmployeesData();
-  }, []);
+  }, [ID]);
 
   const handleSelect = (e) => {
-    e.preventDefault();
+    setSelectedItem(e.target.value);
     setOpen(false);
     setOpenR(true);
   };
 
   return (
-    <div className="w-full p-5 relative min-h-screen">
+    <div
+      className={`w-full p-5 relative min-h-screen ${
+        open ? "flex  mt-[200px] justify-center" : ""
+      }`}
+    >
       <div>
         {loading ? (
-          <p>Loading</p>
+          <span
+            className="loading loading-spinner"
+            style={{ color: colors.primary }}
+          ></span>
         ) : error ? (
           <p>{errorMsg}</p>
         ) : data.length !== 0 ? (
@@ -66,22 +79,28 @@ const AddHours = () => {
           />
         ) : null}
       </div>
-      {openr && <AssignedEmployeeCard selectedItem={selectedItem} />}
+      {openr && selectedItem && (
+        <AssignedEmployeeCard selectedItem={selectedItem} />
+      )}
     </div>
   );
 };
 
 export default AddHours;
 
+// eslint-disable-next-line no-unused-vars
 const AddEmployeeCard = ({ data, handleSelect, setSelectedItem, openr }) => {
+  // eslint-disable-next-line no-unused-vars
   const { colors } = useTheme();
+
+  console.log(data);
 
   return (
     <div>
       <div className="flex items-center mt-5">
         <form className="font-semibold flex gap-5 items-center">
           <select
-            onChange={(e) => setSelectedItem(e.target.value)}
+            onChange={handleSelect}
             className="select select-bordered w-[400px] max-w-xs"
           >
             <option disabled selected>
@@ -95,16 +114,6 @@ const AddEmployeeCard = ({ data, handleSelect, setSelectedItem, openr }) => {
               >{`${val.firstName} ${val.lastName}`}</option>
             ))}
           </select>
-          {!openr && (
-            <button
-              type="submit"
-              className="p-4 px-5 text-white rounded-lg text-xs"
-              style={{ background: colors.primary }}
-              onClick={handleSelect}
-            >
-              SELECT
-            </button>
-          )}
         </form>
       </div>
     </div>
@@ -113,12 +122,9 @@ const AddEmployeeCard = ({ data, handleSelect, setSelectedItem, openr }) => {
 
 const AssignedEmployeeCard = ({ selectedItem }) => {
   const { colors } = useTheme();
-  const [showButton, setShowButton] = useState(true);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [hour, setHour] = useState(0);
-  const [show, setShow] = useState(false);
+
   const [data, setData] = useState(null);
+  const [workingDays, setWorkingDays] = useState(null);
 
   const fetchSelectedEmployeeData = async () => {
     try {
@@ -126,6 +132,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
       if (gettingData) {
         setData(gettingData[0]);
       }
+      setWorkingDays(gettingData[0].workingDays);
     } catch (error) {
       toast.error("Error fetching data");
     }
@@ -133,6 +140,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
 
   useEffect(() => {
     fetchSelectedEmployeeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItem]);
 
   if (!data) {
@@ -164,6 +172,7 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
         <CreateModal
           data={data}
           fetchSelectedEmployeeData={fetchSelectedEmployeeData}
+          workingDays={workingDays}
         />
       </div>
 
@@ -204,10 +213,10 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
                   {val.status}
                 </td>
                 <td className="p-2 text-sm text-gray-700 text-center">
-                  {val.fromDate}
+                  {val.startDate}
                 </td>
                 <td className="p-2 text-sm text-gray-700 text-center">
-                  {val.toDate}
+                  {val.endDate}
                 </td>
                 <td className="p-2 text-sm text-gray-700 text-center">
                   {val.assignedDefaultHours}
@@ -232,8 +241,11 @@ const AssignedEmployeeCard = ({ selectedItem }) => {
   );
 };
 
-const CreateModal = ({ data, fetchSelectedEmployeeData }) => {
+const CreateModal = ({ data, fetchSelectedEmployeeData, workingDays }) => {
   const { colors } = useTheme();
+
+  const { ID } = useAuth();
+
   const formatDate = (date) => {
     return date.toISOString().split("T")[0];
   };
@@ -246,15 +258,22 @@ const CreateModal = ({ data, fetchSelectedEmployeeData }) => {
 
   useEffect(() => {
     if (startDate) {
-      setEndDate(getOneWeekLater(startDate));
+      setEndDate(getOneWeekLater(startDate, workingDays));
     }
-  }, [startDate]);
+  }, [startDate, workingDays]);
 
-  const getOneWeekLater = (date) => {
-    const start = new Date(date);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 5);
-    return formatDate(end);
+  const getOneWeekLater = (startDate, workingDays) => {
+    const start = new Date(startDate);
+    let daysAdded = 0;
+
+    while (daysAdded < workingDays-1) {
+      start.setDate(start.getDate() + 1); 
+      // if (start.getDay() !== 0 && start.getDay() !== 6) {
+        daysAdded++;
+      // }
+    }
+
+    return formatDate(start);
   };
 
   const handleSubmit = async (e) => {
@@ -267,7 +286,8 @@ const CreateModal = ({ data, fetchSelectedEmployeeData }) => {
         data.lastName,
         startDate,
         endDate,
-        totalHours
+        totalHours,
+        ID
       );
 
       if (res) {
@@ -442,12 +462,14 @@ const DeleteCard = ({ timeSheetId, fetchSelectedEmployeeData, data }) => {
 };
 
 const EditCard = ({ data, fetchSelectedEmployeeData }) => {
+  // eslint-disable-next-line no-unused-vars
   const { colors } = useTheme();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [workeHour, setWorkHour] = useState(data.assignedDefaultHours);
-  const [startDate, setStartDate] = useState(data.fromDate);
-  const [endDate, setEndDate] = useState(data.toDate);
+  const [startDate, setStartDate] = useState(data.startDate);
+  // eslint-disable-next-line no-unused-vars
+  const [endDate, setEndDate] = useState(data.endDate);
   const isDisable =
     data.status === "PENDING"
       ? true

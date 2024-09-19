@@ -3,48 +3,78 @@ import axios from "axios";
 
 const AuthContext = createContext({});
 
+// eslint-disable-next-line react/prop-types
 export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(null);
   const [ID, setID] = useState("");
   const [name, setName] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true); // Add loading state
+  const [submittedTimestamp, setSubmittedTimestamp] = useState(null);
 
   const authenticateRole = async (ID, password) => {
     try {
       const response = await axios.post(
         "http://localhost:8080/api/data-details/login",
-        {
-          uniqueId: ID,
-          password: password,
-        }
+        { uniqueId: ID, password: password }
       );
       console.log("Response for authenticating the role:", response);
       const data = response.data;
+
       if (data) {
         setRole(data.role);
         setID(data.id);
         setName(data.fullName);
+        setIsAuthenticated(true);
+        localStorage.setItem("ID", data.id);
+        localStorage.setItem("Role", data.role);
+        localStorage.setItem("Name", data.fullName);
       }
       return data;
     } catch (e) {
       console.log("Error authenticating role:", e);
+      setIsAuthenticated(false);
     }
   };
 
   useEffect(() => {
-    if (ID) {
-      localStorage.setItem("ID:", ID);
-    }
-  }, [ID]);
-  useEffect(() => {
-    if (role) {
-      localStorage.setItem("Role:", role);
-    }
-  }, [role]);
-  useEffect(() => {
-    if (name) {
-      localStorage.setItem("Name:", name);
-    }
-  }, [name]);
+    const initializeAuth = async () => {
+      const storedID = localStorage.getItem("ID");
+      const storedRole = localStorage.getItem("Role");
+      const storedName = localStorage.getItem("Name");
+
+      if (storedID && storedRole && storedName) {
+        try {
+          // Validate stored credentials with the server
+          const response = await axios.post(
+            "http://localhost:8080/api/data-details/validate",
+            { uniqueId: storedID }
+          );
+
+          if (response.data.valid) {
+            setID(storedID);
+            setRole(storedRole);
+            setName(storedName);
+            setIsAuthenticated(true);
+          } else {
+            // Handle invalid stored data
+            localStorage.removeItem("ID");
+            localStorage.removeItem("Role");
+            localStorage.removeItem("Name");
+            setIsAuthenticated(false);
+          }
+        } catch (e) {
+          console.log("Error validating stored data:", e);
+          setIsAuthenticated(false);
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -53,9 +83,13 @@ export const AuthProvider = ({ children }) => {
         ID,
         name,
         authenticateRole,
+        isAuthenticated,
+        submittedTimestamp,
+        setSubmittedTimestamp,
+        loading,
       }}
     >
-      {children}
+      {loading ? <div>Loading...</div> : children}
     </AuthContext.Provider>
   );
 };
