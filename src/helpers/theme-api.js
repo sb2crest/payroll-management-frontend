@@ -42,7 +42,7 @@ export const addConsigneeData = async (
 
 export const getEmployeeData = async (employeeId) => {
   const response = await axios.get(
-    `http://localhost:8080/api/payrollEmployee/findEmployeeByEmployeeId?employeeUniqueId=${employeeId}`
+    `http://localhost:8086/api/payrollEmployee/findEmployeeByEmployeeId?employeeUniqueId=${employeeId}`
   );
 
   return response.data;
@@ -52,7 +52,7 @@ export const getAllEmployees = async (id) => {
   console.log("manager id:", id);
   try {
     const res = await axios.get(
-      `http://localhost:8080/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=${id}`
+      `http://localhost:8086/api/payrollEmployee/findAllEmployeesByMangerUniqueID?managerUniqueId=${id}`
     );
     return res.data;
   } catch (error) {
@@ -62,7 +62,7 @@ export const getAllEmployees = async (id) => {
 
 export const handleReject = async (submissions) => {
   const response = await axios.post(
-    `http://localhost:8080/api/payrollManager/report-approval`,
+    `http://localhost:8086/api/payrollManager/report-approval`,
     submissions
   );
 
@@ -71,7 +71,7 @@ export const handleReject = async (submissions) => {
 
 export const handleApproved = async (submissions) => {
   const response = await axios.post(
-    `http://localhost:8080/api/payrollManager/report-approval`,
+    `http://localhost:8086/api/payrollManager/report-approval`,
     submissions
   );
 
@@ -88,7 +88,7 @@ export const updateEmployeeData = async (
   reportStatus
 ) => {
   const response = await axios.put(
-    `http://localhost:8080/api/payrollManager/editWeeklyReportWithReportId`,
+    `http://localhost:8086/api/payrollManager/editWeeklyReportWithReportId`,
     {
       weeklySubmissionId,
       startDate,
@@ -113,7 +113,7 @@ export const createTimeSheetData = async (
 ) => {
   console.log("comming here two");
   const response = await axios.post(
-    `http://localhost:8080/api/payrollManager/weekly-report`,
+    `http://localhost:8086/api/payrollManager/weekly-report`,
     {
       managerUniqueId: ID,
       firstName: firstName,
@@ -130,7 +130,7 @@ export const createTimeSheetData = async (
 export const deleteTimeSheet = async (timeSheetId) => {
   try {
     const response = await axios.delete(
-      `http://localhost:8080/api/payrollManager/deleteWeeklyReport/${timeSheetId}`
+      `http://localhost:8086/api/payrollManager/deleteWeeklyReport/${timeSheetId}`
     );
     return response.data;
   } catch (error) {

@@ -138,7 +138,7 @@ const Timesheet = () => {
 
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/payrollEmployee/filterEmployeesByName?managerUniqueId=${ID}&employeeName=${searchWithName}`
+        `http://localhost:8086/api/payrollEmployee/filterEmployeesByName?managerUniqueId=${ID}&employeeName=${searchWithName}`
       );
       const data = res.data;
       setFilteredEmployees(data);
@@ -254,7 +254,7 @@ const Timesheet = () => {
         pageSize: rowsPerPage,
       };
       const res = await axios.post(
-        `http://localhost:8080/api/payrollEmployee/filterDataBasedOnCriteria`,
+        `http://localhost:8086/api/payrollEmployee/filterDataBasedOnCriteria`,
         payload
       );
       const data = res.data;
@@ -355,7 +355,7 @@ const Timesheet = () => {
     try {
       console.log("calling ");
       const res = await axios.post(
-        "http://localhost:8080/api/payrollEmployee/filterData",
+        "http://localhost:8086/api/payrollEmployee/filterData",
         request
       );
       const data = res.data.content;

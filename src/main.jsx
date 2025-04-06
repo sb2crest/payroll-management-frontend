@@ -23,7 +23,7 @@ const Worksheet = lazy(() => import("./pages/Worksheet.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
 const Table = lazy(() => import("./pages/Table.jsx"));
 
-axios.defaults.baseURL = "http://localhost:8080/api";
+axios.defaults.baseURL = "http://localhost:8086/api";
 axios.defaults.withCredentials = true;
 
 const router = createBrowserRouter([

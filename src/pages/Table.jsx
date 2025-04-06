@@ -72,7 +72,7 @@ const TimesheetTable = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/payrollManager/updateWeeklyWorkedHours",
+        "http://localhost:8086/api/payrollManager/updateWeeklyWorkedHours",
         {
           method: "PUT",
           headers: {
