@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   const authenticateRole = async (ID, password) => {
     try {
       const response = await axios.post(
-        "http://localhost:8086/api/data-details/login",
+        "https://parroll.seabed2crest.com/api/data-details/login",
         { uniqueId: ID, password: password }
       );
       console.log("Response for authenticating the role:", response);
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
         try {
           // Validate stored credentials with the server
           const response = await axios.post(
-            "http://localhost:8086/api/data-details/validate",
+            "https://payroll.seabed2crest.com/api/data-details/validate",
             { uniqueId: storedID }
           );
 

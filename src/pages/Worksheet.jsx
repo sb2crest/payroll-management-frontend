@@ -15,7 +15,7 @@ const Worksheet = () => {
   // Function to fetch time sheet data
   const fetchTimeSheetData = async (ID) => {
     const res = await axios.get(
-      `http://localhost:8086/api/payrollEmployee/listOfTimeSheets?employeeUniqueId=${ID}`
+      `https://payroll.seabed2crest.com/api/payrollEmployee/listOfTimeSheets?employeeUniqueId=${ID}`
     );
     console.log("res:", res.data);
     return res.data.timeSheet;
@@ -24,7 +24,7 @@ const Worksheet = () => {
   // Function to update worked hours
   const updateWorkHours = async (data) => {
     await axios.put(
-      `http://localhost:8086/api/payrollManager/updateWeeklyWorkedHours`,
+      `https://parroll.seabed2crest.com/api/payrollManager/updateWeeklyWorkedHours`,
       data
     );
   };

@@ -18,7 +18,7 @@ const Notifications = () => {
 
   const { ID, role } = useAuth();
 
-  const base_url = "http://localhost:8086/api/payrollManager";
+  const base_url = "https://payroll.seabed2crest.com/api/payrollManager";
 
   // eslint-disable-next-line no-unused-vars
   const queryClient = useQueryClient();

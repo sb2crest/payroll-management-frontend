@@ -27,7 +27,7 @@ export const ThemeProvider = ({ children }) => {
   const fetchCompanyThemeData = async (companyID) => {
     try {
       const res = await axios.get(
-        `http://localhost:8086/api/organization/getThemeData?companyId=${companyID}`
+        `https://payroll.seabed2crest.com/api/organization/getThemeData?companyId=${companyID}`
       );
       const data = res.data;
 
